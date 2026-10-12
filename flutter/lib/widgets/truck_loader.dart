@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-/// Caminhão que atravessa a tela em loop: sai pela direita, reaparece
-/// pela esquerda e volta ao centro; ao chegar no centro o texto
-/// "recebimento" aparece.
+/// Ícone do Inventário atravessa a tela em loop (sai pela direita,
+/// reaparece pela esquerda e volta ao centro); ao chegar no centro o
+/// texto "Inventário Rotativo" aparece.
 class TruckLoader extends StatefulWidget {
   final String? status;
   const TruckLoader({super.key, this.status});
@@ -11,9 +11,6 @@ class TruckLoader extends StatefulWidget {
   @override
   State<TruckLoader> createState() => _TruckLoaderState();
 }
-
-const _kTruckSvg =
-    '''<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><title>delivery-truck-speed</title><path fill="#ffffff" d="m.5 13.325l.5-2h5.5l-.5 2zm4.375 5.8Q4 18.25 4 17H1.5l.5-2.175h5.175l.9-3.65h2.1l1.25-5H4.5l.15-.6q.15-.7.688-1.137T6.6 4H18l-.925 4H20l3 4l-1 5h-2q0 1.25-.875 2.125T17 20t-2.125-.875T14 17h-4q0 1.25-.875 2.125T7 20t-2.125-.875M2.5 9.675l.5-2h6.5l-.5 2zM7 18q.425 0 .713-.288T8 17t-.288-.712T7 16t-.712.288T6 17t.288.713T7 18m10 0q.425 0 .713-.288T18 17t-.288-.712T17 16t-.712.288T16 17t.288.713T17 18m-1.075-5h4.825l.1-.525L19 10h-2.375z"/></svg>''';
 
 class _TruckLoaderState extends State<TruckLoader>
     with SingleTickerProviderStateMixin {
@@ -59,16 +56,18 @@ class _TruckLoaderState extends State<TruckLoader>
           children: [
             Transform.translate(
               offset: Offset(_dx(t) * w, 0),
-              child: SvgPicture.string(
-                _kTruckSvg,
+              child: SvgPicture.asset(
+                'assets/drawables/ic_inventario.svg',
                 width: 84,
                 height: 84,
+                colorFilter:
+                    const ColorFilter.mode(Colors.white, BlendMode.srcIn),
               ),
             ),
             Opacity(
               opacity: _textOpacity(t),
               child: const Text(
-                'recebimento',
+                'Inventário Rotativo',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -81,8 +80,7 @@ class _TruckLoaderState extends State<TruckLoader>
               const SizedBox(height: 10),
               Text(
                 widget.status!,
-                style:
-                    const TextStyle(color: Colors.white70, fontSize: 14),
+                style: const TextStyle(color: Colors.white70, fontSize: 14),
               ),
             ],
           ],

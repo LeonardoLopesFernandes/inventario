@@ -20,6 +20,8 @@ class ApiClient {
       'User-Store': 'minhaloja/$storeId',
       'Platform-Version': platformVersion,
       'Accept': 'application/json, text/plain, */*',
+      'Origin': 'https://minhaloja.americanas.io',
+      'Referer': 'https://minhaloja.americanas.io/',
     };
     if (token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';

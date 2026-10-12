@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/inventario.dart';
+import '../network/api_client.dart';
 import '../network/inventario_service.dart';
 import '../network/session_manager.dart';
 import '../utils/constants.dart';
@@ -125,10 +126,11 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
         builder: (_) => CriarInventarioScreen(inventoryId: inv.id),
       ));
       _carregar(reset: true);
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Falha ao criar inventário'),
+      final msg = e is ApiException ? 'HTTP ${e.code}: ${e.body}' : '$e';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Falha ao criar inventário: $msg'),
           backgroundColor: Colors.red));
     }
   }
