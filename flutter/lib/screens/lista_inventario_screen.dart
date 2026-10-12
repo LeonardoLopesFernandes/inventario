@@ -467,6 +467,7 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
       backgroundColor: Colors.white,
       elevation: 0,
       scrolledUnderElevation: 0,
+      centerTitle: true,
       title: const Text(
         'Inventário rotativo',
         style: TextStyle(
