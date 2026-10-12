@@ -68,13 +68,12 @@ jobs:
       - name: Build release APK (arm64-v8a, updatable)
         run: |
           VERSION_CODE=$((2000 + BUILD_NUMBER))
-          flutter build apk --split-per-abi --target-platform android-arm64 --build-number=$VERSION_CODE --build-name="1.0.$BUILD_NUMBER" --dart-define=MICROSOFT_CLIENT_SECRET=$microsoftClientSecret
+          flutter build apk --split-per-abi --target-platform android-arm64 --build-number=$VERSION_CODE --build-name="1.0.$BUILD_NUMBER"
         env:
           KEYSTORE_PATH: ${{ github.workspace }}/release-key.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-          microsoftClientSecret: ${{ secrets.MICROSOFT_CLIENT_SECRET }}
           BUILD_NUMBER: ${{ github.run_number }}
 
       - name: Renomear APK
