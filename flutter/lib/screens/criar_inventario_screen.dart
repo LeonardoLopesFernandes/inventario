@@ -120,6 +120,7 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
     return showDialog<int>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         title: const Text(
@@ -374,46 +375,24 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: _escanear,
-                      child: Container(
-                        width: 50,
-                        height: 50,
-                        decoration: const BoxDecoration(
-                          color: Color(Constants.primaryRed),
-                          shape: BoxShape.circle,
-                        ),
-                        child: _adicionando
-                            ? const Padding(
-                                padding: EdgeInsets.all(14),
-                                child: CircularProgressIndicator(
-                                    color: Colors.white, strokeWidth: 2),
-                              )
-                            : const Icon(Icons.qr_code_scanner,
-                                color: Colors.white, size: 24),
-                      ),
+                GestureDetector(
+                  onTap: _escanear,
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: const BoxDecoration(
+                      color: Color(Constants.primaryRed),
+                      shape: BoxShape.circle,
                     ),
-                    if (itens.isNotEmpty)
-                      Positioned(
-                        right: 2,
-                        top: 2,
-                        child: Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: const BoxDecoration(
-                              color: Colors.white, shape: BoxShape.circle),
-                          constraints: const BoxConstraints(
-                              minWidth: 18, minHeight: 18),
-                          child: Text('${itens.length}',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                  color: Color(Constants.primaryRed),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                  ],
+                    child: _adicionando
+                        ? const Padding(
+                            padding: EdgeInsets.all(14),
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Icon(Icons.qr_code_scanner,
+                            color: Colors.white, size: 24),
+                  ),
                 ),
               ],
             ),
@@ -529,16 +508,35 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
   }
 
   PreferredSizeWidget _appBar() {
+    final count = _draft?.items.length ?? 0;
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
       scrolledUnderElevation: 0,
+      centerTitle: true,
       iconTheme: const IconThemeData(color: Color(Constants.invTextDark)),
       title: Text(widget.titulo,
           style: const TextStyle(
               color: Color(Constants.invTextDark),
               fontWeight: FontWeight.bold,
               fontSize: 20)),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+                color: Color(Constants.primaryRed), shape: BoxShape.circle),
+            child: Text('$count',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13)),
+          ),
+        ),
+      ],
     );
   }
 }

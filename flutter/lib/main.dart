@@ -43,6 +43,9 @@ class MyApp extends StatelessWidget {
           backgroundColor: Color(Constants.primaryRed),
           foregroundColor: Colors.white,
         ),
+        dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
+        datePickerTheme:
+            const DatePickerThemeData(backgroundColor: Colors.white),
         useMaterial3: true,
       ),
       initialRoute: '/',
