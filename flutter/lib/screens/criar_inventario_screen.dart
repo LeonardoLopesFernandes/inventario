@@ -431,7 +431,7 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Adicione itens ao inventário rotativo',
+            'Adicione um item para criar um inventário',
             textAlign: TextAlign.center,
             style: TextStyle(
                 fontSize: 18,
@@ -439,11 +439,18 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
                 color: Color(Constants.invTextDark)),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Utilize o EAN ou o SAP para adicionar itens e quantidades.',
+          Text.rich(
+            TextSpan(children: const [
+              TextSpan(text: 'Utilize o botão '),
+              TextSpan(
+                  text: 'Adicionar Item',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              TextSpan(
+                  text: ' acima e indique o produto e a nova quantidade.'),
+            ]),
             textAlign: TextAlign.center,
-            style:
-                TextStyle(fontSize: 14, color: Color(Constants.invTextSecondary)),
+            style: const TextStyle(
+                fontSize: 14, color: Color(Constants.invTextSecondary)),
           ),
         ],
       );
