@@ -57,11 +57,9 @@ class _TruckLoaderState extends State<TruckLoader>
             Transform.translate(
               offset: Offset(_dx(t) * w, 0),
               child: SvgPicture.asset(
-                'assets/drawables/ic_inventario.svg',
+                'assets/drawables/ic_inventario_branco.svg',
                 width: 84,
                 height: 84,
-                colorFilter:
-                    const ColorFilter.mode(Colors.white, BlendMode.srcIn),
               ),
             ),
             Opacity(
