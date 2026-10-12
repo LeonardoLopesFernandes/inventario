@@ -30,6 +30,11 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
   String _filtro = 'Todos';
   int _unread = 0;
 
+  // Filtros (servidor): Id. do inventário, Referência e Data de criação.
+  String _fInventario = '';
+  String _fReferencia = '';
+  String _fData = '';
+
   @override
   void initState() {
     super.initState();
@@ -96,6 +101,9 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
         storeId: _storeId,
         offset: reset ? 0 : _offset,
         limit: _limit,
+        inventoryNumber: _fInventario,
+        reference: _fReferencia,
+        date: _fData,
       );
       if (!mounted) return;
       setState(() {
@@ -383,6 +391,98 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
     );
   }
 
+  String _fmtData(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+  String _fmtYmd(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  Future<void> _abrirFiltros() async {
+    final invCtrl = TextEditingController(text: _fInventario);
+    final refCtrl = TextEditingController(text: _fReferencia);
+    DateTime? dataSel = _fData.isNotEmpty ? DateTime.tryParse(_fData) : null;
+    final dataCtrl =
+        TextEditingController(text: dataSel != null ? _fmtData(dataSel) : '');
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('Filtrar'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: invCtrl,
+                  decoration:
+                      const InputDecoration(labelText: 'Id. de inventário'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: refCtrl,
+                  decoration: const InputDecoration(labelText: 'Referência'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: dataCtrl,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Data de criação',
+                    suffixIcon: Icon(Icons.calendar_today, size: 18),
+                  ),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate: dataSel ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      setDlg(() {
+                        dataSel = picked;
+                        dataCtrl.text = _fmtData(picked);
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                setState(() {
+                  _fInventario = '';
+                  _fReferencia = '';
+                  _fData = '';
+                });
+                _carregar(reset: true);
+              },
+              child: const Text('Limpar'),
+            ),
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancelar')),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                setState(() {
+                  _fInventario = invCtrl.text.trim();
+                  _fReferencia = refCtrl.text.trim();
+                  _fData = dataSel != null ? _fmtYmd(dataSel!) : '';
+                });
+                _carregar(reset: true);
+              },
+              child: const Text('Aplicar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   PreferredSizeWidget _appBar(BuildContext context) {
     return AppBar(
       backgroundColor: Colors.white,
@@ -396,10 +496,16 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
             fontSize: 20),
       ),
       actions: [
-        const Padding(
-          padding: EdgeInsets.only(right: 8),
-          child: Icon(Icons.filter_alt_outlined,
-              color: Color(Constants.invTextDark)),
+        IconButton(
+          icon: Icon(
+            (_fInventario.isNotEmpty ||
+                    _fReferencia.isNotEmpty ||
+                    _fData.isNotEmpty)
+                ? Icons.filter_alt
+                : Icons.filter_alt_outlined,
+            color: const Color(Constants.invTextDark),
+          ),
+          onPressed: _abrirFiltros,
         ),
         _NotificacaoBadge(count: _unread),
       ],
@@ -517,7 +623,7 @@ class _InventarioCard extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Usuário',
+                                const Text('Referência',
                                     style: TextStyle(
                                         color:
                                             Color(Constants.invTextSecondary),

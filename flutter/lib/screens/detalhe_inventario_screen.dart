@@ -101,6 +101,10 @@ class _DetalheInventarioScreenState extends State<DetalheInventarioScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           _headerInfo(d),
+          if (d.finalizado) ...[
+            const SizedBox(height: 12),
+            _avisoFinalizado(),
+          ],
           const SizedBox(height: 16),
           Text('Itens (${d.items.length})',
               style: const TextStyle(
@@ -154,6 +158,31 @@ class _DetalheInventarioScreenState extends State<DetalheInventarioScreen> {
           content: Text('Falha ao excluir inventário'),
           backgroundColor: Colors.red));
     }
+  }
+
+  Widget _avisoFinalizado() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8E1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFFFE082)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Icon(Icons.warning_amber_rounded,
+              color: Color(0xFFB26A00), size: 20),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Inventário finalizado. Os dados deste inventário estão disponíveis apenas para consulta.',
+              style: TextStyle(color: Color(0xFF7A5200), fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _headerInfo(InventoryDetail d) {

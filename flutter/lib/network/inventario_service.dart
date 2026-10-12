@@ -19,12 +19,26 @@ class InventarioService {
     required String storeId,
     int offset = 0,
     int limit = 20,
+    String? inventoryNumber,
+    String? reference,
+    String? date,
+    String? status,
   }) async {
-    final json = await client.get('web/cycle-count', query: {
+    final query = <String, String>{
       'storeId': storeId,
       'offset': offset.toString(),
       'limit': limit.toString(),
-    }) as Map<String, dynamic>;
+    };
+    if (inventoryNumber != null && inventoryNumber.isNotEmpty) {
+      query['inventoryNumber'] = inventoryNumber;
+    }
+    if (reference != null && reference.isNotEmpty) {
+      query['reference'] = reference;
+    }
+    if (date != null && date.isNotEmpty) query['date'] = date;
+    if (status != null && status.isNotEmpty) query['status'] = status;
+    final json = await client.get('web/cycle-count', query: query)
+        as Map<String, dynamic>;
     return CycleCountPage.fromJson(json);
   }
 
