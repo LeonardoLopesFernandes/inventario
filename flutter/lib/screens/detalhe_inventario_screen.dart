@@ -114,61 +114,20 @@ class _DetalheInventarioScreenState extends State<DetalheInventarioScreen> {
               child: Center(child: Text('Nenhum item neste inventário')),
             )
           else
-            ...d.items.map((i) => _ItemCard(
-                  item: i,
-                  onTap: () => _editarItem(i),
-                  onLongPress: () => _removerItem(i),
-                )),
+            ...d.items.map((i) => _ItemCard(item: i)),
         ],
       ),
     );
   }
 
-  Future<void> _editarItem(InventoryItem item) async {
-    final controller =
-        TextEditingController(text: item.countedQuantity.toString());
-    final qtd = await showDialog<int>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Quantidade contada'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          autofocus: true,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-          TextButton(
-              onPressed: () =>
-                  Navigator.pop(ctx, int.tryParse(controller.text.trim())),
-              child: const Text('Salvar')),
-        ],
-      ),
-    );
-    if (qtd == null) return;
-    try {
-      final session = await SessionManager.create();
-      final service = InventarioService.forSession(session);
-      await service.updateItem(widget.inventoryId, item.id, quantity: qtd);
-      await _carregar();
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Falha ao atualizar item'),
-          backgroundColor: Colors.red));
-    }
-  }
-
-  Future<void> _removerItem(InventoryItem item) async {
+  Future<void> _excluirInventario() async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        title: const Text('Remover item'),
-        content: Text('Remover "${item.description}"?'),
+        title: const Text('Excluir inventário'),
+        content: Text(
+            'Deseja excluir ${_detalhe?.inventoryNumber ?? 'este inventário'}?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -183,14 +142,16 @@ class _DetalheInventarioScreenState extends State<DetalheInventarioScreen> {
     try {
       final session = await SessionManager.create();
       final service = InventarioService.forSession(session);
-      await service.removeItems(widget.inventoryId, [
-        {'id': item.id},
-      ]);
-      await _carregar();
+      await service.deleteCycleCount(widget.inventoryId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Inventário excluído'),
+          backgroundColor: Color(Constants.badgeGreen)));
+      Navigator.of(context).pop(true);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Falha ao remover item'),
+          content: Text('Falha ao excluir inventário'),
           backgroundColor: Colors.red));
     }
   }

@@ -16,14 +16,14 @@ class CriarInventarioScreen extends StatefulWidget {
 }
 
 class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
-  final TextEditingController _eanController = TextEditingController();
-  final TextEditingController _qtdController = TextEditingController(text: '0');
+  final TextEditingController _buscaController = TextEditingController();
   SessionManager? _session;
   InventarioService? _service;
 
-  bool _buscando = false;
-  String? _erro;
-  Product? _produto;
+  InventoryDetail? _draft;
+  bool _carregando = true;
+  bool _adicionando = false;
+  int _unread = 0;
 
   @override
   void initState() {
@@ -38,34 +38,199 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
       _session = session;
       _service = InventarioService.forSession(session);
     });
+    _carregar();
+    _carregarNotificacoes();
   }
 
   String get _storeId => _session?.getUserStore() ?? Constants.defaultStore;
 
-  Future<void> _buscar() async {
-    final ean = _eanController.text.trim();
-    if (ean.isEmpty) return;
-    final service = _service;
-    if (service == null) return;
-    setState(() {
-      _buscando = true;
-      _erro = null;
-      _produto = null;
-    });
+  Future<void> _carregar() async {
+    final id = widget.inventoryId;
+    if (id == null) {
+      setState(() => _carregando = false);
+      return;
+    }
     try {
-      final p = await service.getProductByEan(storeId: _storeId, ean: ean);
+      final d = await _service!.getCycleCount(id);
       if (!mounted) return;
       setState(() {
-        _produto = p;
-        _buscando = false;
+        _draft = d;
+        _carregando = false;
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _erro = 'Produto não encontrado para o EAN $ean';
-        _buscando = false;
-      });
+      setState(() => _carregando = false);
     }
+  }
+
+  Future<void> _carregarNotificacoes() async {
+    try {
+      final now = DateTime.now();
+      final created = '${now.year.toString().padLeft(4, '0')}-'
+          '${now.month.toString().padLeft(2, '0')}-'
+          '${now.day.toString().padLeft(2, '0')} 00:00';
+      final page = await _service!.getNotifications(
+          storeId: _storeId, status: 'UNREAD', limit: 1, createdAt: created);
+      if (!mounted) return;
+      setState(() => _unread = page.total);
+    } catch (_) {}
+  }
+
+  Future<void> _buscar() async {
+    final valor = _buscaController.text.trim();
+    if (valor.isEmpty) return;
+    final id = widget.inventoryId;
+    if (id == null) return;
+    setState(() => _adicionando = true);
+    Product p;
+    try {
+      final ehEan = valor.length >= 12;
+      p = await _service!.getProduct(
+        storeId: _storeId,
+        ean: ehEan ? valor : null,
+        sapCode: ehEan ? null : valor,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _adicionando = false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Item não encontrado'),
+          backgroundColor: Colors.red));
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _adicionando = false);
+    final qtd = await _mostrarDialogAdicionar(p);
+    if (qtd == null) return;
+    try {
+      await _service!.addItem(
+        id,
+        ean: p.ean,
+        sapCode: p.sapCode,
+        description: p.description,
+        countedQuantity: qtd,
+      );
+      _buscaController.clear();
+      await _carregar();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao adicionar item'),
+          backgroundColor: Colors.red));
+    }
+  }
+
+  int _qtdAtualDoItem(String ean) {
+    for (final i in _draft?.items ?? const <InventoryItem>[]) {
+      if (i.ean == ean) return i.countedQuantity;
+    }
+    return 0;
+  }
+
+  Future<int?> _mostrarDialogAdicionar(Product p) {
+    final controller =
+        TextEditingController(text: _qtdAtualDoItem(p.ean).toString());
+    return showDialog<int>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        title: const Text(
+          'Adicionar itens ao inventário rotativo',
+          style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(Constants.invTextDark)),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(p.description,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Color(Constants.invTextDark))),
+                        const SizedBox(height: 4),
+                        Text('EAN: ${p.ean}',
+                            style: const TextStyle(
+                                color: Color(Constants.invTextSecondary),
+                                fontSize: 14)),
+                        Text('SAP: ${p.sapCode}',
+                            style: const TextStyle(
+                                color: Color(Constants.invTextSecondary),
+                                fontSize: 14)),
+                        Text('Saldo: ${p.stock.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                                color: Color(Constants.invTextSecondary),
+                                fontSize: 14)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Quantidade atual',
+                            style: TextStyle(
+                                color: Color(Constants.invTextSecondary),
+                                fontSize: 12)),
+                        const SizedBox(height: 4),
+                        Text('${_qtdAtualDoItem(p.ean)}',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Color(Constants.invTextDark))),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const Text('Indique abaixo a nova quantidade.',
+                  style: TextStyle(
+                      color: Color(Constants.invTextDark), fontSize: 14)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Nova quantidade',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () =>
+                  Navigator.pop(ctx, int.tryParse(controller.text.trim()) ?? 0),
+              child: const Text('Adicionar')),
+        ],
+      ),
+    );
   }
 
   Future<void> _escanear() async {
@@ -73,228 +238,90 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
       MaterialPageRoute(builder: (_) => const ScannerEANScreen()),
     );
     if (ean != null && ean.isNotEmpty) {
-      _eanController.text = ean;
+      _buscaController.text = ean;
       _buscar();
     }
   }
 
-  @override
-  void dispose() {
-    _eanController.dispose();
-    _qtdController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+  Future<void> _editarItem(InventoryItem item) async {
+    final controller =
+        TextEditingController(text: item.countedQuantity.toString());
+    final qtd = await showDialog<int>(
+      context: context,
+      builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: const IconThemeData(color: Color(Constants.invTextDark)),
-        title: const Text('Criar inventário',
-            style: TextStyle(
-                color: Color(Constants.invTextDark),
-                fontWeight: FontWeight.w500,
-                fontSize: 20)),
-        actions: [
-          if (widget.inventoryId != null)
-            IconButton(
-              icon: const Icon(Icons.check_circle_outline,
-                  color: Color(Constants.primaryRed)),
-              tooltip: 'Finalizar inventário',
-              onPressed: _finalizar,
-            ),
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            width: 28,
-            height: 28,
-            decoration: const BoxDecoration(
-                color: Color(Constants.primaryRed), shape: BoxShape.circle),
-            alignment: Alignment.center,
-            child: const Text('OG',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: const Color(Constants.bgGray),
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.search,
-                            color: Color(Constants.invTextDark), size: 22),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextField(
-                            controller: _eanController,
-                            keyboardType: TextInputType.number,
-                            textInputAction: TextInputAction.search,
-                            onSubmitted: (_) => _buscar(),
-                            decoration: const InputDecoration(
-                              hintText: 'EAN',
-                              border: InputBorder.none,
-                              isCollapsed: true,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  width: 54,
-                  height: 54,
-                  decoration: const BoxDecoration(
-                    color: Color(Constants.primaryRed),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.qr_code_scanner,
-                        color: Colors.white, size: 24),
-                    onPressed: _escanear,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            if (_buscando)
-              const Center(child: CircularProgressIndicator())
-            else if (_erro != null)
-              Center(
-                child: Text(_erro!,
-                    style:
-                        const TextStyle(color: Color(Constants.invTextDark))),
-              )
-            else if (_produto != null)
-              _produtoCard(_produto!)
-            else ...[
-              const Spacer(),
-              SvgPicture.asset(
-                'assets/drawables/ic_empty_wink.svg',
-                width: 60,
-                height: 60,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Adicione itens ao inventário rotativo',
-                style: TextStyle(
-                    color: Color(Constants.invTextDark),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Utilize o EAN para adicionar itens e quantidades.',
-                style: TextStyle(
-                    color: Color(Constants.invTextSecondary), fontSize: 14),
-                textAlign: TextAlign.center,
-              ),
-              const Spacer(flex: 2),
-            ],
-          ],
+        title: const Text('Quantidade contada'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: const InputDecoration(border: OutlineInputBorder()),
         ),
-      ),
-    );
-  }
-
-  Widget _produtoCard(Product p) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(Constants.borderColor)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(p.description,
-              style: const TextStyle(
-                  color: Color(Constants.invTextDark),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16)),
-          const SizedBox(height: 6),
-          Text('EAN ${p.ean}   •   SAP ${p.sapCode}',
-              style: const TextStyle(
-                  color: Color(Constants.invTextSecondary), fontSize: 12)),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _col('Estoque', p.stock.toStringAsFixed(0)),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Quantidade contada',
-                        style: TextStyle(
-                            color: Color(Constants.invTextSecondary),
-                            fontSize: 12)),
-                    const SizedBox(height: 2),
-                    TextField(
-                      controller: _qtdController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(Constants.primaryRed),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-              onPressed: _adicionar,
-              icon: const Icon(Icons.add),
-              label: const Text('Adicionar item',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () =>
+                  Navigator.pop(ctx, int.tryParse(controller.text.trim())),
+              child: const Text('Salvar')),
         ],
       ),
     );
+    if (qtd == null) return;
+    try {
+      await _service!
+          .updateItem(widget.inventoryId!, item.id, quantity: qtd);
+      await _carregar();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao atualizar item'),
+          backgroundColor: Colors.red));
+    }
   }
 
-  Future<void> _finalizar() async {
+  Future<void> _removerItem(InventoryItem item) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Excluir item'),
+        content: Text('Remover "${item.description}"?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Não')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sim')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _service!.removeItems(widget.inventoryId!, [
+        {'id': item.id},
+      ]);
+      await _carregar();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao excluir item'),
+          backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> _processar() async {
     final id = widget.inventoryId;
     if (id == null) return;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        title: const Text('Finalizar inventário'),
+        title: const Text('Processar inventário'),
         content: const Text(
-            'Deseja finalizar o inventário? Depois de finalizado não será possível adicionar itens.'),
+            'Deseja processar o inventário? Depois de processado não será possível alterar os itens.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -310,66 +337,278 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
       await _service!.processInventory(id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Inventário finalizado'),
+          content: Text('Inventário processado com sucesso'),
           backgroundColor: Color(Constants.badgeGreen)));
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Falha ao finalizar inventário'),
+          content: Text('Falha ao processar inventário'),
           backgroundColor: Colors.red));
     }
   }
 
-  Future<void> _adicionar() async {
-    final p = _produto;
-    if (p == null) return;
-    final id = widget.inventoryId;
-    if (id == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Crie um inventário antes de adicionar itens.')));
-      return;
-    }
-    final qtd = int.tryParse(_qtdController.text.trim()) ?? 0;
-    try {
-      await _service!.addItem(
-        id,
-        ean: p.ean,
-        sapCode: p.sapCode,
-        description: p.description,
-        countedQuantity: qtd,
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Item adicionado: ${p.description}'),
-          backgroundColor: const Color(Constants.badgeGreen)));
-      _eanController.clear();
-      _qtdController.text = '0';
-      setState(() => _produto = null);
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Falha ao adicionar item'),
-          backgroundColor: Colors.red));
-    }
+  @override
+  void dispose() {
+    _buscaController.dispose();
+    super.dispose();
   }
 
-  Widget _col(String label, String valor) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label,
-              style: const TextStyle(
-                  color: Color(Constants.invTextSecondary), fontSize: 12)),
-          const SizedBox(height: 2),
-          Text(valor,
-              style: const TextStyle(
-                  color: Color(Constants.invTextDark),
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold)),
-        ],
+  @override
+  Widget build(BuildContext context) {
+    final itens = _draft?.items ?? [];
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: _appBar(),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _buscaController,
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (_) => _buscar(),
+                    decoration: InputDecoration(
+                      hintText: 'EAN / SAP',
+                      hintStyle: TextStyle(color: Colors.grey.shade600),
+                      prefixIcon:
+                          const Icon(Icons.search, color: Color(0xFF9E9E9E)),
+                      filled: true,
+                      fillColor: const Color(Constants.bgGray),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Stack(
+                  children: [
+                    GestureDetector(
+                      onTap: _escanear,
+                      child: Container(
+                        width: 50,
+                        height: 50,
+                        decoration: const BoxDecoration(
+                          color: Color(Constants.primaryRed),
+                          shape: BoxShape.circle,
+                        ),
+                        child: _adicionando
+                            ? const Padding(
+                                padding: EdgeInsets.all(14),
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2),
+                              )
+                            : const Icon(Icons.qr_code_scanner,
+                                color: Colors.white, size: 24),
+                      ),
+                    ),
+                    if (itens.isNotEmpty)
+                      Positioned(
+                        right: 2,
+                        top: 2,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(
+                              color: Colors.white, shape: BoxShape.circle),
+                          constraints: const BoxConstraints(
+                              minWidth: 18, minHeight: 18),
+                          child: Text('${itens.length}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  color: Color(Constants.primaryRed),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Expanded(child: _corpo(itens)),
+          ],
+        ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: itens.isEmpty ? null : _processar,
+        backgroundColor: itens.isEmpty
+            ? Colors.grey
+            : const Color(Constants.primaryRed),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        icon: const Icon(Icons.check),
+        label: const Text('PROCESSAR',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+    );
+  }
+
+  Widget _corpo(List<InventoryItem> itens) {
+    if (_carregando) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (itens.isEmpty) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SvgPicture.asset(
+            'assets/drawables/ic_empty_wink.svg',
+            width: 64,
+            height: 64,
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Adicione itens ao inventário rotativo',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(Constants.invTextDark)),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Utilize o EAN ou o SAP para adicionar itens e quantidades.',
+            textAlign: TextAlign.center,
+            style:
+                TextStyle(fontSize: 14, color: Color(Constants.invTextSecondary)),
+          ),
+        ],
+      );
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.only(top: 4, bottom: 90),
+      itemCount: itens.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (_, i) {
+        final item = itens[i];
+        return InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () => _editarItem(item),
+          onLongPress: () => _removerItem(item),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(Constants.borderColor)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.description,
+                          style: const TextStyle(
+                              color: Color(Constants.invTextDark),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15)),
+                      const SizedBox(height: 4),
+                      Text('EAN ${item.ean}   •   SAP ${item.sapCode}',
+                          style: const TextStyle(
+                              color: Color(Constants.invTextSecondary),
+                              fontSize: 12)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  children: [
+                    const Text('Contado',
+                        style: TextStyle(
+                            color: Color(Constants.invTextSecondary),
+                            fontSize: 11)),
+                    const SizedBox(height: 2),
+                    Text('${item.countedQuantity}',
+                        style: const TextStyle(
+                            color: Color(Constants.invTextDark),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  PreferredSizeWidget _appBar() {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      iconTheme: const IconThemeData(color: Color(Constants.invTextDark)),
+      title: const Text('Criar inventário',
+          style: TextStyle(
+              color: Color(Constants.invTextDark),
+              fontWeight: FontWeight.bold,
+              fontSize: 20)),
+      actions: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(Constants.invTextDark), width: 1.5),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: const Text('IA',
+              style: TextStyle(
+                  color: Color(Constants.invTextDark),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12)),
+        ),
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(8),
+              child: Icon(Icons.notifications_none,
+                  color: Color(Constants.invTextDark)),
+            ),
+            if (_unread > 0)
+              Positioned(
+                right: 2,
+                top: 2,
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(
+                      color: Color(Constants.primaryRed), shape: BoxShape.circle),
+                  constraints:
+                      const BoxConstraints(minWidth: 16, minHeight: 16),
+                  child: Text('$_unread',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold)),
+                ),
+              ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 12, left: 4),
+          child: CircleAvatar(
+            radius: 16,
+            backgroundColor: const Color(Constants.primaryRed),
+            child: const Text('OG',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold)),
+          ),
+        ),
+      ],
     );
   }
 }

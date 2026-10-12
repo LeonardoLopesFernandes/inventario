@@ -64,13 +64,17 @@ class InventarioService {
     return NotificationPage.fromJson(json);
   }
 
-  Future<Product> getProductByEan({
+  Future<Product> getProduct({
     required String storeId,
-    required String ean,
+    String? ean,
+    String? sapCode,
   }) async {
+    final query = <String, String>{};
+    if (ean != null && ean.isNotEmpty) query['ean'] = ean;
+    if (sapCode != null && sapCode.isNotEmpty) query['sapCode'] = sapCode;
     final json = await client.get(
         'web/cycle-count/product/store/$storeId',
-        query: {'ean': ean}) as Map<String, dynamic>;
+        query: query) as Map<String, dynamic>;
     return Product.fromJson(json);
   }
 
