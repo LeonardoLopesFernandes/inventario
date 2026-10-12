@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../models/inventario.dart';
 import '../network/inventario_service.dart';
 import '../network/session_manager.dart';
@@ -187,7 +188,11 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
               _produtoCard(_produto!)
             else ...[
               const Spacer(),
-              const Center(child: Text('😉', style: TextStyle(fontSize: 60))),
+              SvgPicture.asset(
+                'assets/drawables/ic_empty_wink.svg',
+                width: 60,
+                height: 60,
+              ),
               const SizedBox(height: 16),
               const Text(
                 'Adicione itens ao inventário rotativo',
