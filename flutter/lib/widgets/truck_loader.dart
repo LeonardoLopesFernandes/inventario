@@ -1,9 +1,9 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-/// Ícone do Inventário atravessa a tela em loop (sai pela direita,
-/// reaparece pela esquerda e volta ao centro); ao chegar no centro o
-/// texto "Inventário Rotativo" aparece.
+/// Ícone do Inventário girando suavemente (combina com "Inventário Rotativo"),
+/// com um leve pulso de escala, e o texto fixo.
 class TruckLoader extends StatefulWidget {
   final String? status;
   const TruckLoader({super.key, this.status});
@@ -21,7 +21,7 @@ class _TruckLoaderState extends State<TruckLoader>
     super.initState();
     _c = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2600),
+      duration: const Duration(milliseconds: 4200),
     )..repeat();
   }
 
@@ -31,47 +31,36 @@ class _TruckLoaderState extends State<TruckLoader>
     super.dispose();
   }
 
-  double _dx(double t) {
-    if (t < 0.35) return 0.8 * (t / 0.35);
-    if (t < 0.45) return -0.8;
-    if (t < 0.8) return -0.8 + 0.8 * ((t - 0.45) / 0.35);
-    return 0.0;
-  }
-
-  double _textOpacity(double t) {
-    if (t < 0.72) return 0.0;
-    if (t > 0.84) return 1.0;
-    return (t - 0.72) / 0.12;
-  }
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _c,
       builder: (_, __) {
         final t = _c.value;
-        final w = MediaQuery.of(context).size.width;
+        final angle = t * 2 * math.pi;
+        final escala = 0.9 + 0.1 * (0.5 + 0.5 * math.sin(t * 2 * math.pi));
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Transform.translate(
-              offset: Offset(_dx(t) * w, 0),
-              child: SvgPicture.asset(
-                'assets/drawables/ic_inventario_branco.svg',
-                width: 84,
-                height: 84,
+            Transform.rotate(
+              angle: angle,
+              child: Transform.scale(
+                scale: escala,
+                child: SvgPicture.asset(
+                  'assets/drawables/ic_inventario_branco.svg',
+                  width: 84,
+                  height: 84,
+                ),
               ),
             ),
-            Opacity(
-              opacity: _textOpacity(t),
-              child: const Text(
-                'Inventário Rotativo',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                ),
+            const SizedBox(height: 16),
+            const Text(
+              'Inventário Rotativo',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
               ),
             ),
             if (widget.status != null) ...[
