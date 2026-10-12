@@ -57,23 +57,6 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Marca d'água no fundo
-            Positioned.fill(
-              child: Align(
-                alignment: const Alignment(0.15, 0.45),
-                child: Transform.scale(
-                  scale: 6.0,
-                  child: const Text(
-                    'IR',
-                    style: TextStyle(
-                      fontSize: 320,
-                      color: Color(0xFFE0E0E0),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
             Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
