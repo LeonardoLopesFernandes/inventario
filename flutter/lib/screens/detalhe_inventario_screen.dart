@@ -205,7 +205,7 @@ class _DetalheInventarioScreenState extends State<DetalheInventarioScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Usuário',
+              const Text('Referência',
                   style: TextStyle(
                       color: Color(Constants.invTextSecondary), fontSize: 12)),
               const SizedBox(height: 2),
