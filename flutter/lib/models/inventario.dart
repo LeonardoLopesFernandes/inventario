@@ -1,5 +1,30 @@
 // Models da API do Inventário (sl-bff.americanas.io).
 
+Map<String, dynamic> _mapOf(dynamic v) =>
+    v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{};
+
+String _statusNameFromCode(String code) {
+  switch (code.toUpperCase()) {
+    case 'DRAFT':
+      return 'Em andamento';
+    case 'FINISHED':
+      return 'Finalizado';
+    default:
+      return code;
+  }
+}
+
+String _statusCodeOf(dynamic raw) => raw is Map
+    ? (raw['code']?.toString() ?? '')
+    : (raw is String ? raw : '');
+
+String _statusNameOf(dynamic raw) {
+  if (raw is Map) return raw['name']?.toString() ?? '';
+  if (raw is String) return _statusNameFromCode(raw);
+  return '';
+}
+
+
 class CycleCountPage {
   final int total;
   final int offset;
@@ -14,7 +39,7 @@ class CycleCountPage {
   });
 
   factory CycleCountPage.fromJson(Map<String, dynamic> json) {
-    final r = (json['_result'] as Map?) ?? const {};
+    final r = _mapOf(json['_result']);
     return CycleCountPage(
       total: (r['total'] as num?)?.toInt() ?? 0,
       offset: (r['offset'] as num?)?.toInt() ?? 0,
@@ -44,14 +69,13 @@ class Inventory {
   });
 
   factory Inventory.fromJson(Map<String, dynamic> json) {
-    final status = (json['status'] as Map?) ?? const {};
     return Inventory(
       id: json['id']?.toString() ?? '',
       inventoryNumber: json['inventoryNumber']?.toString() ?? '',
       reference: json['reference']?.toString() ?? '',
       createdAt: json['createdAt']?.toString() ?? '',
-      statusCode: status['code']?.toString() ?? '',
-      statusName: status['name']?.toString() ?? '',
+      statusCode: _statusCodeOf(json['status']),
+      statusName: _statusNameOf(json['status']),
     );
   }
 
@@ -81,8 +105,8 @@ class StoreInfo {
   factory StoreInfo.fromJson(Map<String, dynamic> json) => StoreInfo(
         id: json['id']?.toString() ?? '',
         name: json['name']?.toString() ?? '',
-        cycleCount: StoreCycleCount.fromJson(
-            (json['cycleCount'] as Map?)?.cast<String, dynamic>() ?? const {}),
+        cycleCount:
+            StoreCycleCount.fromJson(_mapOf(json['cycleCount'])),
       );
 }
 
@@ -142,13 +166,12 @@ class InventoryDetail {
   });
 
   factory InventoryDetail.fromJson(Map<String, dynamic> json) {
-    final status = (json['status'] as Map?) ?? const {};
     return InventoryDetail(
       id: json['id']?.toString() ?? '',
       inventoryNumber: json['inventoryNumber']?.toString() ?? '',
       reference: json['reference']?.toString() ?? '',
-      statusCode: status['code']?.toString() ?? '',
-      statusName: status['name']?.toString() ?? '',
+      statusCode: _statusCodeOf(json['status']),
+      statusName: _statusNameOf(json['status']),
       items: (json['items'] as List? ?? const [])
           .map((e) => InventoryItem.fromJson(Map<String, dynamic>.from(e)))
           .toList(),
@@ -201,7 +224,7 @@ class NotificationPage {
   });
 
   factory NotificationPage.fromJson(Map<String, dynamic> json) {
-    final r = (json['_result'] as Map?) ?? const {};
+    final r = _mapOf(json['_result']);
     return NotificationPage(
       total: (r['total'] as num?)?.toInt() ?? 0,
       offset: (r['offset'] as num?)?.toInt() ?? 0,

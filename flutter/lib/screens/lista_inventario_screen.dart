@@ -342,6 +342,7 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
           Widget? menu;
           if (!inv.finalizado) {
             menu = PopupMenuButton<String>(
+              color: Colors.white,
               icon: const Icon(Icons.more_vert,
                   color: Color(Constants.invTextDark), size: 20),
               onSelected: (v) {
