@@ -128,12 +128,9 @@ class InventarioService {
         body: {'quantity': quantity});
   }
 
-  /// Remove itens do inventário.
-  Future<void> removeItems(
-    String inventoryId,
-    List<Map<String, dynamic>> items,
-  ) async {
+  /// Remove itens do inventário (lista de ids).
+  Future<void> removeItems(String inventoryId, List<String> ids) async {
     await client.post('web/cycle-count/$inventoryId/item/remove',
-        body: {'items': items});
+        body: {'items': ids});
   }
 }

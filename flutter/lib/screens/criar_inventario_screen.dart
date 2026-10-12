@@ -8,8 +8,10 @@ import 'scanner_ean_screen.dart';
 
 class CriarInventarioScreen extends StatefulWidget {
   final String? inventoryId;
+  final String titulo;
 
-  const CriarInventarioScreen({super.key, this.inventoryId});
+  const CriarInventarioScreen(
+      {super.key, this.inventoryId, this.titulo = 'Criar inventário'});
 
   @override
   State<CriarInventarioScreen> createState() => _CriarInventarioScreenState();
@@ -300,9 +302,7 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
     );
     if (ok != true) return;
     try {
-      await _service!.removeItems(widget.inventoryId!, [
-        {'id': item.id},
-      ]);
+      await _service!.removeItems(widget.inventoryId!, [item.id]);
       await _carregar();
     } catch (_) {
       if (!mounted) return;
@@ -549,8 +549,8 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
       elevation: 0,
       scrolledUnderElevation: 0,
       iconTheme: const IconThemeData(color: Color(Constants.invTextDark)),
-      title: const Text('Criar inventário',
-          style: TextStyle(
+      title: Text(widget.titulo,
+          style: const TextStyle(
               color: Color(Constants.invTextDark),
               fontWeight: FontWeight.bold,
               fontSize: 20)),

@@ -122,6 +122,7 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
     try {
       final inv = await service.createInventory(
           storeId: _storeId, email: session?.getUserEmail() ?? '');
+      await _carregar(reset: true);
       if (!mounted) return;
       await Navigator.of(context).push(MaterialPageRoute(
         builder: (_) => CriarInventarioScreen(inventoryId: inv.id),
@@ -132,6 +133,55 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
       final msg = e is ApiException ? 'HTTP ${e.code}: ${e.body}' : '$e';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Falha ao criar inventário: $msg'),
+          backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> _detalhes(Inventory inv) async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => inv.finalizado
+          ? DetalheInventarioScreen(
+              inventoryId: inv.id,
+              inventoryNumber: inv.inventoryNumber,
+            )
+          : CriarInventarioScreen(
+              inventoryId: inv.id,
+              titulo: 'Detalhes do inventário',
+            ),
+    ));
+    _carregar(reset: true);
+  }
+
+  Future<void> _processar(Inventory inv) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Processar inventário'),
+        content: const Text(
+            'Deseja processar o inventário? Depois de processado não será possível alterar os itens.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Não')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sim')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _service!.processInventory(inv.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Inventário processado com sucesso'),
+          backgroundColor: Color(Constants.badgeGreen)));
+      _carregar(reset: true);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao processar inventário'),
           backgroundColor: Colors.red));
     }
   }
@@ -301,18 +351,32 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
                   )
                 : const SizedBox(height: 80);
           }
+          final inv = lista[index];
+          Widget? menu;
+          if (!inv.finalizado) {
+            menu = PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert,
+                  color: Color(Constants.invTextDark), size: 20),
+              onSelected: (v) {
+                if (v == 'detalhes') {
+                  _detalhes(inv);
+                } else if (v == 'processar') {
+                  _processar(inv);
+                } else if (v == 'excluir') {
+                  _excluir(inv);
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'detalhes', child: Text('Detalhes')),
+                PopupMenuItem(value: 'processar', child: Text('Processar')),
+                PopupMenuItem(value: 'excluir', child: Text('Excluir')),
+              ],
+            );
+          }
           return InkWell(
             borderRadius: BorderRadius.circular(8),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => DetalheInventarioScreen(
-                  inventoryId: lista[index].id,
-                  inventoryNumber: lista[index].inventoryNumber,
-                ),
-              ),
-            ),
-            onLongPress: () => _excluir(lista[index]),
-            child: _InventarioCard(inventario: lista[index]),
+            onTap: () => _detalhes(inv),
+            child: _InventarioCard(inventario: inv, trailing: menu),
           );
         },
       ),
@@ -383,8 +447,9 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
 
 class _InventarioCard extends StatelessWidget {
   final Inventory inventario;
+  final Widget? trailing;
 
-  const _InventarioCard({required this.inventario});
+  const _InventarioCard({required this.inventario, this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -442,6 +507,7 @@ class _InventarioCard extends StatelessWidget {
                                   fontSize: 12),
                             ),
                           ),
+                          if (trailing != null) trailing!,
                         ],
                       ),
                       const SizedBox(height: 16),
