@@ -28,7 +28,6 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
   bool _isLastPage = false;
   String? _erro;
   String _filtro = 'Todos';
-  int _unread = 0;
 
   // Filtros (servidor): Id. do inventário, Referência e Data de criação.
   String _fInventario = '';
@@ -50,26 +49,6 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
       _service = InventarioService.forSession(session);
     });
     _carregar(reset: true);
-    _carregarNotificacoes();
-  }
-
-  Future<void> _carregarNotificacoes() async {
-    final service = _service;
-    if (service == null) return;
-    try {
-      final now = DateTime.now();
-      final created = '${now.year.toString().padLeft(4, '0')}-'
-          '${now.month.toString().padLeft(2, '0')}-'
-          '${now.day.toString().padLeft(2, '0')} 00:00';
-      final page = await service.getNotifications(
-        storeId: _storeId,
-        status: 'UNREAD',
-        limit: 1,
-        createdAt: created,
-      );
-      if (!mounted) return;
-      setState(() => _unread = page.total);
-    } catch (_) {}
   }
 
   String get _storeId =>
@@ -507,7 +486,6 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
           ),
           onPressed: _abrirFiltros,
         ),
-        _NotificacaoBadge(count: _unread),
       ],
     );
   }
@@ -664,44 +642,6 @@ class _InventarioCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _NotificacaoBadge extends StatelessWidget {
-  final int count;
-
-  const _NotificacaoBadge({required this.count});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          const Icon(Icons.notifications_none_outlined,
-              color: Color(Constants.invTextDark)),
-          if (count > 0)
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(
-                    color: Color(Constants.primaryRed), shape: BoxShape.circle),
-                constraints:
-                    const BoxConstraints(minWidth: 14, minHeight: 14),
-                child: Text('$count',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center),
-              ),
-            ),
-        ],
       ),
     );
   }

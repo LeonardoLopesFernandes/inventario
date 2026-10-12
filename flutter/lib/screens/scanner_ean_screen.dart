@@ -58,47 +58,6 @@ class _ScannerEANScreenState extends State<ScannerEANScreen> {
               fontWeight: FontWeight.bold,
               fontSize: 20),
         ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              border: Border.all(
-                  color: const Color(Constants.invTextDark), width: 1.5),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Text('IA',
-                style: TextStyle(
-                    color: Color(Constants.invTextDark),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12)),
-          ),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(8),
-                child: Icon(Icons.notifications_none,
-                    color: Color(Constants.invTextDark)),
-              ),
-              Positioned(
-                right: 2,
-                top: 2,
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(
-                      color: Color(Constants.primaryRed), shape: BoxShape.circle),
-                  child: const Text('9',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: Stack(
         children: [

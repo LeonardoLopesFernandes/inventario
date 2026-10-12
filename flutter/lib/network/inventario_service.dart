@@ -117,14 +117,28 @@ class InventarioService {
     await client.delete('web/cycle-count/$inventoryId');
   }
 
-  /// Cria um inventário (draft) e retorna o objeto criado.
+  /// Cria um inventário (draft). O backend pode devolver o id como string
+  /// simples ou como objeto; tratamos os dois casos.
   Future<Inventory> createInventory({
     required String storeId,
     required String email,
   }) async {
-    final json = await client.post('web/cycle-count',
-        body: {'storeId': storeId, 'email': email}) as Map<String, dynamic>;
-    return Inventory.fromJson(json);
+    final data = await client.post('web/cycle-count',
+        body: {'storeId': storeId, 'email': email});
+    if (data is Map) {
+      return Inventory.fromJson(Map<String, dynamic>.from(data));
+    }
+    if (data is String) {
+      return Inventory(
+        id: data,
+        inventoryNumber: '',
+        reference: '',
+        createdAt: '',
+        statusCode: 'DRAFT',
+        statusName: 'Em andamento',
+      );
+    }
+    throw Exception('Resposta inesperada ao criar inventário');
   }
 
   /// Finaliza (processa) o inventário.

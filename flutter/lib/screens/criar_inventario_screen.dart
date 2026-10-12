@@ -25,7 +25,6 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
   InventoryDetail? _draft;
   bool _carregando = true;
   bool _adicionando = false;
-  int _unread = 0;
 
   @override
   void initState() {
@@ -41,7 +40,6 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
       _service = InventarioService.forSession(session);
     });
     _carregar();
-    _carregarNotificacoes();
   }
 
   String get _storeId => _session?.getUserStore() ?? Constants.defaultStore;
@@ -63,19 +61,6 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
       if (!mounted) return;
       setState(() => _carregando = false);
     }
-  }
-
-  Future<void> _carregarNotificacoes() async {
-    try {
-      final now = DateTime.now();
-      final created = '${now.year.toString().padLeft(4, '0')}-'
-          '${now.month.toString().padLeft(2, '0')}-'
-          '${now.day.toString().padLeft(2, '0')} 00:00';
-      final page = await _service!.getNotifications(
-          storeId: _storeId, status: 'UNREAD', limit: 1, createdAt: created);
-      if (!mounted) return;
-      setState(() => _unread = page.total);
-    } catch (_) {}
   }
 
   Future<void> _buscar() async {
@@ -554,61 +539,6 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
               color: Color(Constants.invTextDark),
               fontWeight: FontWeight.bold,
               fontSize: 20)),
-      actions: [
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(Constants.invTextDark), width: 1.5),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: const Text('IA',
-              style: TextStyle(
-                  color: Color(Constants.invTextDark),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12)),
-        ),
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(8),
-              child: Icon(Icons.notifications_none,
-                  color: Color(Constants.invTextDark)),
-            ),
-            if (_unread > 0)
-              Positioned(
-                right: 2,
-                top: 2,
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(
-                      color: Color(Constants.primaryRed), shape: BoxShape.circle),
-                  constraints:
-                      const BoxConstraints(minWidth: 16, minHeight: 16),
-                  child: Text('$_unread',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold)),
-                ),
-              ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.only(right: 12, left: 4),
-          child: CircleAvatar(
-            radius: 16,
-            backgroundColor: const Color(Constants.primaryRed),
-            child: const Text('OG',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold)),
-          ),
-        ),
-      ],
     );
   }
 }
