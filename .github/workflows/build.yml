@@ -78,10 +78,10 @@ jobs:
           microsoftClientSecret: ${{ secrets.MICROSOFT_CLIENT_SECRET }}
 
       - name: Renomear APK
-        run: cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/inventario-release.apk && ls -la build/app/outputs/flutter-apk/inventario-release.apk
+        run: cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/lojamobile-release.apk && ls -la build/app/outputs/flutter-apk/lojamobile-release.apk
 
       - name: Upload arm64-v8a APK
         uses: actions/upload-artifact@v4
         with:
-          name: inventario-release-apk
-          path: ${{ github.workspace }}/flutter/build/app/outputs/flutter-apk/inventario-release.apk
+          name: lojamobile-release-apk
+          path: ${{ github.workspace }}/flutter/build/app/outputs/flutter-apk/lojamobile-release.apk
