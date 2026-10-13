@@ -7,7 +7,9 @@ import '../utils/date_format.dart';
 import 'quebra_detalhe_screen.dart';
 
 class QuebraScreen extends StatefulWidget {
-  const QuebraScreen({super.key});
+  final bool apenasConsulta;
+
+  const QuebraScreen({super.key, this.apenasConsulta = false});
 
   @override
   State<QuebraScreen> createState() => _QuebraScreenState();
@@ -158,8 +160,10 @@ class _QuebraScreenState extends State<QuebraScreen> {
                 fontSize: 20)),
       ),
       body: _corpo(),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _novaQuebra,
+      floatingActionButton: widget.apenasConsulta
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _novaQuebra,
         backgroundColor: const Color(Constants.primaryRed),
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -209,7 +213,7 @@ class _QuebraScreenState extends State<QuebraScreen> {
         itemBuilder: (_, i) {
           final b = _items[i];
           Widget? menu;
-          if (!b.processado) {
+          if (!b.processado && !widget.apenasConsulta) {
             menu = PopupMenuButton<String>(
               color: Colors.white,
               icon: const Icon(Icons.more_vert,

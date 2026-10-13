@@ -63,7 +63,7 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
                       icon: 'assets/drawables/quebra.png',
                       title: 'Quebras',
                       onPressed: () =>
-                          Navigator.of(context).pushNamed('/quebra'),
+                          Navigator.of(context).pushNamed('/quebras'),
                     ),
                   ),
                   const SizedBox(width: 16),

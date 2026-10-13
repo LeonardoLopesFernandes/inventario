@@ -8,6 +8,7 @@ import 'screens/login_screen.dart';
 import 'screens/login_webview_screen.dart';
 import 'screens/lista_inventario_screen.dart';
 import 'screens/quebra_screen.dart';
+import 'screens/quebras_menu_screen.dart';
 import 'screens/home_hub_screen.dart';
 
 void main() async {
@@ -56,7 +57,9 @@ class MyApp extends StatelessWidget {
         '/login': (ctx) => const LoginScreen(),
         '/login_webview': (ctx) => const LoginWebViewScreen(),
         '/inventario': (ctx) => const ListaInventarioScreen(),
+        '/quebras': (ctx) => const QuebrasMenuScreen(),
         '/quebra': (ctx) => const QuebraScreen(),
+        '/quebra_consulta': (ctx) => const QuebraScreen(apenasConsulta: true),
         '/home': (ctx) => const HomeHubScreen(),
       },
     );
