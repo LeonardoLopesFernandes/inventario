@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../utils/constants.dart';
 
-/// Tela de leitura de EAN. A câmera real será ligada quando adicionarmos o
-/// pacote de barcode; por ora, o código é digitado pelo botão inferior.
-/// Retorna o EAN via Navigator.pop.
+/// Leitura de EAN com a câmera do aparelho (mobile_scanner).
+/// Ao detectar um código, retorna o valor via Navigator.pop.
 class ScannerEANScreen extends StatefulWidget {
   const ScannerEANScreen({super.key});
 
@@ -12,6 +12,57 @@ class ScannerEANScreen extends StatefulWidget {
 }
 
 class _ScannerEANScreenState extends State<ScannerEANScreen> {
+  late final MobileScannerController _controller;
+  bool _handled = false;
+  bool _torchOn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = MobileScannerController(
+      detectionSpeed: DetectionSpeed.noDuplicates,
+      facing: CameraFacing.back,
+      formats: const [
+        BarcodeFormat.ean13,
+        BarcodeFormat.ean8,
+        BarcodeFormat.code128,
+        BarcodeFormat.code39,
+        BarcodeFormat.itf14,
+        BarcodeFormat.upcA,
+        BarcodeFormat.upcE,
+        BarcodeFormat.qrCode,
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onDetect(BarcodeCapture capture) {
+    if (_handled || !mounted) return;
+    String? code;
+    for (final b in capture.barcodes) {
+      final v = b.rawValue;
+      if (v != null && v.isNotEmpty) {
+        code = v;
+        break;
+      }
+    }
+    if (code == null) return;
+    _handled = true;
+    Navigator.of(context).pop(code);
+  }
+
+  Future<void> _toggleTorch() async {
+    try {
+      await _controller.toggleTorch();
+      if (mounted) setState(() => _torchOn = !_torchOn);
+    } catch (_) {}
+  }
+
   Future<void> _digitarEan() async {
     final controller = TextEditingController();
     final ean = await showDialog<String>(
@@ -61,20 +112,35 @@ class _ScannerEANScreenState extends State<ScannerEANScreen> {
       ),
       body: Stack(
         children: [
-          // Espaço reservado para a pré-visualização da câmera.
-          Container(color: Colors.grey.shade400),
-          Center(
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.85,
-              height: 130,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                border: Border.all(color: Colors.white38, width: 1.5),
-                borderRadius: BorderRadius.circular(4),
+          Positioned.fill(
+            child: MobileScanner(
+              controller: _controller,
+              onDetect: _onDetect,
+              errorBuilder: (context, error) => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text(
+                    'Não foi possível acessar a câmera. Verifique a permissão nas configurações do app.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
               ),
-              child: Stack(children: _buildScannerCorners()),
             ),
           ),
+          // Mira de leitura (cantos brancos)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Center(
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  height: 140,
+                  child: Stack(children: _buildScannerCorners()),
+                ),
+              ),
+            ),
+          ),
+          // Lanterna
           Positioned(
             bottom: 90,
             right: 24,
@@ -90,12 +156,15 @@ class _ScannerEANScreenState extends State<ScannerEANScreen> {
                 ],
               ),
               child: IconButton(
-                icon: const Icon(Icons.flashlight_on,
-                    color: Color(Constants.primaryRed)),
-                onPressed: () {},
+                icon: Icon(
+                  _torchOn ? Icons.flashlight_on : Icons.flashlight_off,
+                  color: const Color(Constants.primaryRed),
+                ),
+                onPressed: _toggleTorch,
               ),
             ),
           ),
+          // Digitar o código EAN
           Positioned(
             bottom: 30,
             left: 0,
@@ -106,7 +175,7 @@ class _ScannerEANScreenState extends State<ScannerEANScreen> {
                 child: const Text(
                   'Digitar o código EAN',
                   style: TextStyle(
-                      color: Color(Constants.primaryRed),
+                      color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.bold),
                 ),
@@ -130,8 +199,8 @@ class _ScannerEANScreenState extends State<ScannerEANScreen> {
 
   Widget _cornerBox({required bool top, required bool left}) {
     return Container(
-      width: 24,
-      height: 24,
+      width: 26,
+      height: 26,
       decoration: BoxDecoration(
         border: Border(
           top: top
