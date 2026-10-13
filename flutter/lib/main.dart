@@ -13,6 +13,12 @@ import 'screens/precificacao_menu_screen.dart';
 import 'screens/home_hub_screen.dart';
 import 'precificacao/screens/etiquetas/etiquetas_screen.dart';
 import 'precificacao/screens/papeletas/papeletas_diarias_screen.dart';
+import 'recebimento/screens/home_screen.dart';
+import 'recebimento/screens/detalhes_viagem_screen.dart';
+import 'recebimento/screens/itens_screen.dart';
+import 'recebimento/screens/fotos_recebimento_screen.dart';
+import 'recebimento/screens/imagens_recebimento_screen.dart';
+import 'recebimento/screens/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,6 +70,12 @@ class MyApp extends StatelessWidget {
         '/precificacao': (ctx) => const PrecificacaoMenuScreen(),
         '/precificacao_etiquetas': (ctx) => const EtiquetasScreen(),
         '/precificacao_papeletas': (ctx) => const PapeletasDiariasScreen(),
+        '/recebimento': (ctx) => const HomeScreen(),
+        '/detalhes': (ctx) => const DetalhesViagemScreen(),
+        '/itens': (ctx) => const ItensScreen(),
+        '/fotos': (ctx) => const FotosRecebimentoScreen(),
+        '/imagens': (ctx) => const ImagensRecebimentoScreen(),
+        '/profile': (ctx) => const ProfileScreen(),
         '/quebra': (ctx) => const QuebraScreen(),
         '/quebra_consulta': (ctx) => const QuebraScreen(apenasConsulta: true),
         '/home': (ctx) => const HomeHubScreen(),

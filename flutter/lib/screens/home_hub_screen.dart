@@ -32,11 +32,7 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
     if (sair == true && mounted) SystemNavigator.pop();
   }
 
-  void _emBreve(String nome) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$nome: em breve')),
-    );
-  }
+  void _emBreve(String nome) {}
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +90,8 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
                       iconAsset: 'assets/drawables/recebimento.png',
                       fallbackIcon: Icons.local_shipping_outlined,
                       title: 'Recebimento Centralizado',
-                      onTap: () => _emBreve('Recebimento'),
+                      onTap: () =>
+                          Navigator.of(context).pushNamed('/recebimento'),
                     ),
                     _MenuCard(
                       iconAsset: 'assets/drawables/inventario.png',
