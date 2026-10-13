@@ -47,6 +47,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           BUILD_NUMBER: ${{ github.run_number }}
+          microsoftClientSecret: ${{ secrets.MICROSOFT_CLIENT_SECRET }}
         run: |
           VERSION_CODE=$((2000 + BUILD_NUMBER))
           flutter build apk \
@@ -55,6 +56,7 @@ jobs:
             --target-platform android-arm64 \
             --build-number=$VERSION_CODE \
             --build-name="${GITHUB_REF_NAME#v}" \
+            --dart-define=MICROSOFT_CLIENT_SECRET=$microsoftClientSecret \
             --no-tree-shake-icons
 
       - name: Rename APK
