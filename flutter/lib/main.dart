@@ -9,7 +9,10 @@ import 'screens/login_webview_screen.dart';
 import 'screens/lista_inventario_screen.dart';
 import 'screens/quebra_screen.dart';
 import 'screens/quebras_menu_screen.dart';
+import 'screens/precificacao_menu_screen.dart';
 import 'screens/home_hub_screen.dart';
+import 'precificacao/screens/etiquetas/etiquetas_screen.dart';
+import 'precificacao/screens/papeletas/papeletas_diarias_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,6 +61,9 @@ class MyApp extends StatelessWidget {
         '/login_webview': (ctx) => const LoginWebViewScreen(),
         '/inventario': (ctx) => const ListaInventarioScreen(),
         '/quebras': (ctx) => const QuebrasMenuScreen(),
+        '/precificacao': (ctx) => const PrecificacaoMenuScreen(),
+        '/precificacao_etiquetas': (ctx) => const EtiquetasScreen(),
+        '/precificacao_papeletas': (ctx) => const PapeletasDiariasScreen(),
         '/quebra': (ctx) => const QuebraScreen(),
         '/quebra_consulta': (ctx) => const QuebraScreen(apenasConsulta: true),
         '/home': (ctx) => const HomeHubScreen(),

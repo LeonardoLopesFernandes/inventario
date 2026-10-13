@@ -87,7 +87,8 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
                       iconAsset: 'assets/drawables/precificacao.png',
                       fallbackIcon: Icons.request_quote_outlined,
                       title: 'Precificação',
-                      onTap: () => _emBreve('Precificação'),
+                      onTap: () =>
+                          Navigator.of(context).pushNamed('/precificacao'),
                     ),
                     _MenuCard(
                       iconAsset: 'assets/drawables/recebimento.png',
