@@ -1,6 +1,7 @@
 import 'api_client.dart';
 import '../utils/constants.dart';
 import '../models/inventario.dart';
+import '../models/quebra.dart';
 
 /// Serviço da API do Inventário (sl-bff).
 class InventarioService {
@@ -160,5 +161,52 @@ class InventarioService {
   Future<void> removeItems(String inventoryId, List<String> ids) async {
     await client.post('web/cycle-count/$inventoryId/item/remove',
         body: {'items': ids});
+  }
+
+  // ---------- Quebra ----------
+
+  /// Produto para a quebra (endpoint diferente do inventário).
+  Future<Product> getProductStore({
+    required String storeId,
+    required String ean,
+  }) async {
+    final json = await client.get('web/product/store/$storeId',
+        query: {'ean': ean}) as Map<String, dynamic>;
+    return Product.fromJson(json);
+  }
+
+  Future<BreakagePage> getBreakages({
+    required int year,
+    required String store,
+    int offset = 0,
+    int limit = 15,
+    bool mainPageFilter = true,
+  }) async {
+    final json = await client.get('web/breakage', query: {
+      'year': '$year',
+      'store': store,
+      'offset': '$offset',
+      'limit': '$limit',
+      'mainPageFilter': '$mainPageFilter',
+    }) as Map<String, dynamic>;
+    return BreakagePage.fromJson(json);
+  }
+
+  Future<dynamic> getPendingBreakage({
+    required String email,
+    required String store,
+  }) {
+    return client.get('web/breakage/pending',
+        query: {'email': email, 'store': store});
+  }
+
+  Future<List<BreakageReason>> getBreakageReasons() async {
+    final data = await client.get('web/breakage/reasons');
+    if (data is List) {
+      return data
+          .map((e) => BreakageReason.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+    return const [];
   }
 }

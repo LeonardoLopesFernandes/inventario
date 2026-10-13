@@ -7,6 +7,7 @@ import '../network/session_manager.dart';
 import '../utils/constants.dart';
 import 'detalhe_inventario_screen.dart';
 import 'criar_inventario_screen.dart';
+import '../widgets/app_drawer.dart';
 
 class ListaInventarioScreen extends StatefulWidget {
   const ListaInventarioScreen({super.key});
@@ -233,6 +234,7 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
       child: Scaffold(
       backgroundColor: const Color(Constants.bgGray),
       appBar: _appBar(context),
+      drawer: const AppDrawer(),
       body: Column(
         children: [
           Container(
@@ -469,6 +471,12 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: true,
+      leading: Builder(
+        builder: (ctx) => IconButton(
+          icon: const Icon(Icons.menu, color: Color(Constants.invTextDark)),
+          onPressed: () => Scaffold.of(ctx).openDrawer(),
+        ),
+      ),
       title: const Text(
         'Inventário rotativo',
         style: TextStyle(

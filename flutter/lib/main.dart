@@ -7,6 +7,7 @@ import 'network/session_manager.dart';
 import 'screens/login_screen.dart';
 import 'screens/login_webview_screen.dart';
 import 'screens/lista_inventario_screen.dart';
+import 'screens/quebra_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,6 +55,7 @@ class MyApp extends StatelessWidget {
         '/login': (ctx) => const LoginScreen(),
         '/login_webview': (ctx) => const LoginWebViewScreen(),
         '/inventario': (ctx) => const ListaInventarioScreen(),
+        '/quebra': (ctx) => const QuebraScreen(),
       },
     );
   }
