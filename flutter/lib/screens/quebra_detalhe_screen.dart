@@ -22,8 +22,9 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
   InventarioService? _service;
   List<BreakageReason> _reasons = const [];
   List<BreakageItem> _itens = [];
+  final Set<String> _selecionados = {};
   bool _buscando = false;
-  Breakage? _breakage;
+  bool _porSap = false;
   bool _somenteLeitura = false;
 
   @override
@@ -35,14 +36,14 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
   Future<void> _init() async {
     final session = await SessionManager.create();
     final service = InventarioService.forSession(session);
-    Breakage? breakage;
     List<BreakageItem> itens = [];
     List<BreakageReason> reasons = const [];
+    bool somenteLeitura = false;
     try {
       final d = await service.getBreakageDetail(widget.breakageId);
-      breakage = d.breakage;
       itens = d.items;
       reasons = d.reasons;
+      somenteLeitura = d.breakage.processado;
     } catch (_) {
       try {
         reasons = await service.getBreakageReasons();
@@ -52,10 +53,9 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
     setState(() {
       _session = session;
       _service = service;
-      _breakage = breakage;
       _itens = itens;
       _reasons = reasons;
-      _somenteLeitura = breakage?.processado ?? false;
+      _somenteLeitura = somenteLeitura;
     });
   }
 
@@ -67,7 +67,11 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
     setState(() => _buscando = true);
     Product produto;
     try {
-      produto = await _service!.getProductStore(storeId: _storeId, ean: valor);
+      produto = await _service!.getProductStore(
+        storeId: _storeId,
+        ean: _porSap ? null : valor,
+        sapCode: _porSap ? valor : null,
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _buscando = false);
@@ -79,11 +83,7 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
     setState(() => _buscando = false);
     final res = await mostrarDialogAdicionarQuebra(context,
         produto: produto, motivos: _reasons);
-    if (res == null ||
-        res.action == QuebraDialogAction.cancelar ||
-        res.motivo == null) {
-      return;
-    }
+    if (res == null) return;
     try {
       final itens = await _service!.addBreakageItem(
         widget.breakageId,
@@ -92,7 +92,7 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
         description: produto.description,
         stock: produto.stock.toInt(),
         quantity: res.quantidade,
-        reasonId: res.motivo!.id,
+        reasonId: res.motivo.id,
       );
       if (!mounted) return;
       setState(() => _itens = itens);
@@ -118,14 +118,46 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
     }
   }
 
-  Future<void> _descartarQuebra() async {
+  Future<void> _editarItem(BreakageItem it) async {
+    final produto = Product(
+      sapCode: it.sapCode,
+      ean: it.ean,
+      description: it.description,
+      quantity: 0,
+      stock: it.stock.toDouble(),
+    );
+    final res = await mostrarDialogAdicionarQuebra(
+      context,
+      produto: produto,
+      motivos: _reasons,
+      quantidadeInicial: it.quantity,
+      motivoInicial: it.reason,
+    );
+    if (res == null) return;
+    try {
+      final lista = await _service!.updateBreakageItem(
+        widget.breakageId,
+        it.id,
+        quantity: res.quantidade,
+        reasonId: res.motivo.id,
+      );
+      if (!mounted) return;
+      setState(() => _itens = lista ?? _itens);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao alterar item'), backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> _removerSelecionados() async {
+    if (_selecionados.isEmpty) return;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        title: const Text('Descartar quebra'),
-        content: const Text(
-            'A quebra será removida e os itens descartados. Deseja continuar?'),
+        title: const Text('Remover itens'),
+        content: Text('Remover ${_selecionados.length} item(ns) selecionado(s)?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
@@ -138,14 +170,17 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
     );
     if (ok != true) return;
     try {
-      await _service!.deleteBreakage(widget.breakageId);
+      for (final id in _selecionados.toList()) {
+        await _service!.removeBreakageItem(widget.breakageId, id);
+      }
+      _selecionados.clear();
+      final d = await _service!.getBreakageDetail(widget.breakageId);
       if (!mounted) return;
-      Navigator.of(context).pop(true);
+      setState(() => _itens = d.items);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Falha ao descartar quebra'),
-          backgroundColor: Colors.red));
+          content: Text('Falha ao remover itens'), backgroundColor: Colors.red));
     }
   }
 
@@ -182,127 +217,6 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
     }
   }
 
-  Future<void> _editarItem(BreakageItem it) async {
-    final qtdController = TextEditingController(text: '${it.quantity}');
-    BreakageReason? motivo;
-    for (final m in _reasons) {
-      if (m.label == it.reason) {
-        motivo = m;
-        break;
-      }
-    }
-    motivo ??= _reasons.isNotEmpty ? _reasons.first : null;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDlg) => AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text('Alterar item da quebra'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(it.description,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Color(Constants.invTextDark))),
-              const SizedBox(height: 4),
-              Text('EAN ${it.ean}   •   SAP ${it.sapCode}',
-                  style: const TextStyle(
-                      color: Color(Constants.invTextSecondary), fontSize: 12)),
-              const SizedBox(height: 16),
-              TextField(
-                controller: qtdController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Quantidade a quebrar',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<BreakageReason>(
-                value: motivo,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Motivo',
-                  border: OutlineInputBorder(),
-                ),
-                items: _reasons
-                    .map((m) => DropdownMenuItem(
-                          value: m,
-                          child: Text(m.label),
-                        ))
-                    .toList(),
-                onChanged: (v) => setDlg(() => motivo = v),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancelar')),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(Constants.primaryRed),
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Salvar'),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (ok != true) return;
-    try {
-      final lista = await _service!.updateBreakageItem(
-        widget.breakageId,
-        it.id,
-        quantity: int.tryParse(qtdController.text.trim()) ?? it.quantity,
-        reasonId: motivo?.id ?? '',
-      );
-      if (!mounted) return;
-      setState(() => _itens = lista ?? _itens);
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Falha ao alterar item'), backgroundColor: Colors.red));
-    }
-  }
-
-  Future<void> _removerItem(BreakageItem it) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Remover item'),
-        content: Text('Remover "${it.description}" da quebra?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Não')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Sim')),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    try {
-      final lista =
-          await _service!.removeBreakageItem(widget.breakageId, it.id);
-      if (!mounted) return;
-      setState(() {
-        _itens = lista ?? _itens.where((e) => e.id != it.id).toList();
-      });
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Falha ao remover item'), backgroundColor: Colors.red));
-    }
-  }
-
   @override
   void dispose() {
     _buscaController.dispose();
@@ -312,140 +226,129 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F8F8),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        centerTitle: true,
         iconTheme: const IconThemeData(color: Color(Constants.invTextDark)),
-        title: const Text('Quebra',
-            style: TextStyle(
+        title: Text(_somenteLeitura ? 'Quebra' : 'Cadastrar quebra',
+            style: const TextStyle(
                 color: Color(Constants.invTextDark),
-                fontWeight: FontWeight.bold,
-                fontSize: 20)),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Container(
-              width: 28,
-              height: 28,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                  color: Color(Constants.primaryRed), shape: BoxShape.circle),
-              child: Text('${_itens.length}',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13)),
+                fontSize: 18,
+                fontWeight: FontWeight.w500)),
+      ),
+      body: Column(
+        children: [
+          if (_somenteLeitura) ...[
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _avisoConsulta(),
             ),
-          ),
+            const SizedBox(height: 12),
+          ] else ...[
+            Container(color: Colors.white, child: _seletorEanSap()),
+            const SizedBox(height: 16),
+            _campoBusca(),
+          ],
+          const SizedBox(height: 12),
+          Expanded(child: _corpo()),
+          if (!_somenteLeitura) _painelInferior(),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          children: [
-            if (!_somenteLeitura) ...[
-              const SizedBox(height: 12),
-              _campoBusca(),
-            ],
-            if (_somenteLeitura) ...[
-              const SizedBox(height: 12),
-              _avisoConsulta(),
-            ],
-            const SizedBox(height: 12),
-            Expanded(child: _corpo()),
-            if (!_somenteLeitura) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _descartarQuebra,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(Constants.primaryRed),
-                        side: const BorderSide(
-                            color: Color(Constants.primaryRed)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text('DESCARTAR QUEBRA',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 12)),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _abrirQuebra,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(Constants.primaryRed),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text('ABRIR QUEBRA',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 12)),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-            ],
-          ],
-        ),
+    );
+  }
+
+  Widget _seletorEanSap() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      child: Row(
+        children: [
+          _radio('Incluir por EAN', !_porSap, () => setState(() => _porSap = false)),
+          const SizedBox(width: 32),
+          _radio('Incluir por SAP', _porSap, () => setState(() => _porSap = true)),
+        ],
+      ),
+    );
+  }
+
+  Widget _radio(String label, bool selecionado, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(
+            selecionado
+                ? Icons.radio_button_checked
+                : Icons.radio_button_unchecked,
+            color: selecionado
+                ? const Color(Constants.primaryRed)
+                : Colors.grey,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: selecionado ? FontWeight.w500 : FontWeight.normal,
+                  color: selecionado
+                      ? const Color(Constants.invTextDark)
+                      : Colors.grey)),
+        ],
       ),
     );
   }
 
   Widget _campoBusca() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: _buscaController,
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => _buscar(),
-            decoration: InputDecoration(
-              hintText: 'EAN / SAP',
-              hintStyle: TextStyle(color: Colors.grey.shade600),
-              prefixIcon: const Icon(Icons.search, color: Color(0xFF9E9E9E)),
-              filled: true,
-              fillColor: const Color(Constants.bgGray),
-              contentPadding: const EdgeInsets.symmetric(vertical: 0),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: BorderSide.none,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F1F1),
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: TextField(
+                controller: _buscaController,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.search,
+                onSubmitted: (_) => _buscar(),
+                decoration: InputDecoration(
+                  hintText: _porSap ? 'SAP' : 'EAN',
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        GestureDetector(
-          onTap: _escanear,
-          child: Container(
-            width: 50,
-            height: 50,
-            decoration: const BoxDecoration(
-              color: Color(Constants.primaryRed),
-              shape: BoxShape.circle,
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: _escanear,
+            child: Container(
+              height: 50,
+              width: 50,
+              decoration: const BoxDecoration(
+                color: Color(Constants.primaryRed),
+                shape: BoxShape.circle,
+              ),
+              child: _buscando
+                  ? const Padding(
+                      padding: EdgeInsets.all(14),
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Icon(Icons.qr_code_scanner, color: Colors.white),
             ),
-            child: _buscando
-                ? const Padding(
-                    padding: EdgeInsets.all(14),
-                    child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2),
-                  )
-                : const Icon(Icons.qr_code_scanner,
-                    color: Colors.white, size: 24),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -460,8 +363,7 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
-          Icon(Icons.warning_amber_rounded,
-              color: Color(0xFFB26A00), size: 20),
+          Icon(Icons.warning_amber_rounded, color: Color(0xFFB26A00), size: 20),
           SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -479,34 +381,34 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('Nenhum item na quebra',
-              textAlign: TextAlign.center,
+          const CircleAvatar(
+            radius: 30,
+            backgroundColor: Color(0xFFBDBDBD),
+            child: Icon(Icons.sentiment_satisfied, size: 36, color: Colors.white),
+          ),
+          const SizedBox(height: 16),
+          const Text('Adicione itens para iniciar a quebra',
               style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(Constants.invTextDark))),
-          if (!_somenteLeitura) ...[
-            const SizedBox(height: 8),
-            const Text('Utilize o EAN/SAP para adicionar itens.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 14, color: Color(Constants.invTextSecondary))),
-          ],
+                  color: Color(Constants.invTextSecondary))),
+          const SizedBox(height: 8),
+          const Text('Utilize o EAN para adicionar itens e quantidades.',
+              style: TextStyle(fontSize: 13, color: Colors.grey)),
         ],
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.only(top: 4, bottom: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: _itens.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (_, i) {
         final it = _itens[i];
         return InkWell(
           borderRadius: BorderRadius.circular(8),
-          onLongPress: _somenteLeitura ? null : () => _removerItem(it),
           onTap: _somenteLeitura ? null : () => _editarItem(it),
           child: Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
@@ -514,6 +416,18 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
             ),
             child: Row(
               children: [
+                if (!_somenteLeitura)
+                  Checkbox(
+                    value: _selecionados.contains(it.id),
+                    activeColor: const Color(Constants.primaryRed),
+                    onChanged: (v) => setState(() {
+                      if (v == true) {
+                        _selecionados.add(it.id);
+                      } else {
+                        _selecionados.remove(it.id);
+                      }
+                    }),
+                  ),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -556,6 +470,70 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _painelInferior() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black12, blurRadius: 10, offset: Offset(0, -5)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade400,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(Constants.primaryRed),
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: Colors.grey.shade300,
+                disabledForegroundColor: Colors.grey.shade600,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+              ),
+              onPressed: _itens.isEmpty ? null : _abrirQuebra,
+              child: const Text('Abrir quebra',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(Constants.primaryRed),
+                side: BorderSide(color: Colors.grey.shade300),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+              ),
+              onPressed:
+                  _selecionados.isEmpty ? null : _removerSelecionados,
+              child: const Text('Remover itens selecionados',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
