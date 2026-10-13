@@ -225,7 +225,10 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (_, i) {
         final it = _itens[i];
-        return Container(
+        return InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onLongPress: () => _removerItem(it),
+          child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -268,8 +271,40 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
               ),
             ],
           ),
-        );
+        ));
       },
     );
+  }
+
+  Future<void> _removerItem(BreakageItem it) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Remover item'),
+        content: Text('Remover "${it.description}" da quebra?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Não')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sim')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      final lista =
+          await _service!.removeBreakageItem(widget.breakageId, it.id);
+      if (!mounted) return;
+      setState(() {
+        _itens = lista ?? _itens.where((e) => e.id != it.id).toList();
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao remover item'), backgroundColor: Colors.red));
+    }
   }
 }

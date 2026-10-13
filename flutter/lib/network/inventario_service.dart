@@ -254,4 +254,17 @@ class InventarioService {
     }
     return const [];
   }
+
+  /// Remove um item da quebra. Retorna a lista atualizada (se vier no body).
+  Future<List<BreakageItem>?> removeBreakageItem(
+      String breakageId, String itemId) async {
+    final data =
+        await client.delete('web/breakage/$breakageId/items/$itemId');
+    if (data is Map && data['data'] is List) {
+      return (data['data'] as List)
+          .map((e) => BreakageItem.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+    return null;
+  }
 }
