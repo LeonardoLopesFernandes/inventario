@@ -4,6 +4,7 @@ import '../network/api_client.dart';
 import '../network/inventario_service.dart';
 import '../network/session_manager.dart';
 import '../utils/constants.dart';
+import '../utils/date_format.dart';
 import 'detalhe_inventario_screen.dart';
 import 'criar_inventario_screen.dart';
 
@@ -600,7 +601,7 @@ class _InventarioCard extends StatelessWidget {
                                             Color(Constants.invTextSecondary),
                                         fontSize: 12)),
                                 const SizedBox(height: 2),
-                                Text(inventario.createdAt,
+                                Text(formatDataBr(inventario.createdAt),
                                     style: const TextStyle(
                                         color: Color(Constants.invTextDark),
                                         fontSize: 14,

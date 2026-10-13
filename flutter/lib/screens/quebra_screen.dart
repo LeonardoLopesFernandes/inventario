@@ -3,6 +3,7 @@ import '../models/quebra.dart';
 import '../network/inventario_service.dart';
 import '../network/session_manager.dart';
 import '../utils/constants.dart';
+import '../utils/date_format.dart';
 import 'quebra_detalhe_screen.dart';
 
 class QuebraScreen extends StatefulWidget {
@@ -243,11 +244,7 @@ class _BreakageCard extends StatelessWidget {
 
   const _BreakageCard({required this.breakage, this.trailing});
 
-  String _dataFmt(String iso) {
-    final d = DateTime.tryParse(iso);
-    if (d == null) return iso;
-    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
-  }
+  String _dataFmt(String iso) => formatDataBr(iso);
 
   @override
   Widget build(BuildContext context) {
