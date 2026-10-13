@@ -102,6 +102,7 @@ class BreakageItem {
   final int stock;
   final int quantity;
   final double costPrice;
+  final String reason;
 
   BreakageItem({
     required this.id,
@@ -112,6 +113,7 @@ class BreakageItem {
     required this.stock,
     required this.quantity,
     required this.costPrice,
+    required this.reason,
   });
 
   factory BreakageItem.fromJson(Map<String, dynamic> j) => BreakageItem(
@@ -123,5 +125,28 @@ class BreakageItem {
         stock: (j['stock'] as num?)?.toInt() ?? 0,
         quantity: (j['quantity'] as num?)?.toInt() ?? 0,
         costPrice: (j['costPrice'] as num?)?.toDouble() ?? 0,
+        reason: j['reason']?.toString() ?? '',
+      );
+}
+
+class BreakageDetail {
+  final Breakage breakage;
+  final List<BreakageItem> items;
+  final List<BreakageReason> reasons;
+
+  BreakageDetail({
+    required this.breakage,
+    required this.items,
+    required this.reasons,
+  });
+
+  factory BreakageDetail.fromJson(Map<String, dynamic> j) => BreakageDetail(
+        breakage: Breakage.fromJson(_map(j['breakage'])),
+        items: (j['data'] as List? ?? const [])
+            .map((e) => BreakageItem.fromJson(Map<String, dynamic>.from(e)))
+            .toList(),
+        reasons: (j['reasons'] as List? ?? const [])
+            .map((e) => BreakageReason.fromJson(Map<String, dynamic>.from(e)))
+            .toList(),
       );
 }

@@ -273,4 +273,10 @@ class InventarioService {
     }
     return null;
   }
+
+  Future<BreakageDetail> getBreakageDetail(String breakageId) async {
+    final json = await client.get('web/breakage/$breakageId')
+        as Map<String, dynamic>;
+    return BreakageDetail.fromJson(json);
+  }
 }

@@ -8,6 +8,7 @@ import 'screens/login_screen.dart';
 import 'screens/login_webview_screen.dart';
 import 'screens/lista_inventario_screen.dart';
 import 'screens/quebra_screen.dart';
+import 'screens/home_hub_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +57,7 @@ class MyApp extends StatelessWidget {
         '/login_webview': (ctx) => const LoginWebViewScreen(),
         '/inventario': (ctx) => const ListaInventarioScreen(),
         '/quebra': (ctx) => const QuebraScreen(),
+        '/home': (ctx) => const HomeHubScreen(),
       },
     );
   }
@@ -79,7 +81,7 @@ class _SplashDeciderState extends State<SplashDecider> {
   Future<void> _decide() async {
     final session = await SessionManager.create();
     if (session.isLoggedIn()) {
-      Navigator.of(context).pushReplacementNamed('/inventario');
+      Navigator.of(context).pushReplacementNamed('/home');
     } else {
       Navigator.of(context).pushReplacementNamed('/login');
     }

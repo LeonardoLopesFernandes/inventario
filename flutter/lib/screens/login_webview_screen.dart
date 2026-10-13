@@ -226,7 +226,7 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
 
   void _irParaHome() {
     if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed('/inventario');
+    Navigator.of(context).pushReplacementNamed('/home');
   }
 
   Future<void> _preencherLoginAutomatico() async {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../models/inventario.dart';
 import '../network/api_client.dart';
 import '../network/inventario_service.dart';
@@ -7,7 +6,6 @@ import '../network/session_manager.dart';
 import '../utils/constants.dart';
 import 'detalhe_inventario_screen.dart';
 import 'criar_inventario_screen.dart';
-import '../widgets/app_drawer.dart';
 
 class ListaInventarioScreen extends StatefulWidget {
   const ListaInventarioScreen({super.key});
@@ -228,13 +226,9 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: _onPopInvoked,
-      child: Scaffold(
+    return Scaffold(
       backgroundColor: const Color(Constants.bgGray),
       appBar: _appBar(context),
-      drawer: const AppDrawer(),
       body: Column(
         children: [
           Container(
@@ -267,30 +261,7 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
                 fontSize: 16)),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-    ));
-  }
-
-  Future<void> _onPopInvoked(bool didPop, Object? result) async {
-    if (didPop) return;
-    final sair = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Sair do aplicativo'),
-        content: const Text('Deseja realmente sair do aplicativo?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Não')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Sim')),
-        ],
-      ),
     );
-    if (sair == true && mounted) {
-      SystemNavigator.pop();
-    }
   }
 
   Widget _corpo() {
@@ -471,12 +442,6 @@ class _ListaInventarioScreenState extends State<ListaInventarioScreen> {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: true,
-      leading: Builder(
-        builder: (ctx) => IconButton(
-          icon: const Icon(Icons.menu, color: Color(Constants.invTextDark)),
-          onPressed: () => Scaffold.of(ctx).openDrawer(),
-        ),
-      ),
       title: const Text(
         'Inventário rotativo',
         style: TextStyle(

@@ -166,7 +166,16 @@ class _QuebraScreenState extends State<QuebraScreen> {
         padding: const EdgeInsets.all(16),
         itemCount: _items.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (_, i) => _BreakageCard(breakage: _items[i]),
+        itemBuilder: (_, i) => InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () async {
+            await Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => QuebraDetalheScreen(breakageId: _items[i].id),
+            ));
+            _carregar(reset: true);
+          },
+          child: _BreakageCard(breakage: _items[i]),
+        ),
       ),
     );
   }
