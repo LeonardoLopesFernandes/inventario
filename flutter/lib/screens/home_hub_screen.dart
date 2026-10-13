@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../utils/constants.dart';
-import '../network/session_manager.dart';
 
-/// Home com dois acessos: Inventário Rotativo e Quebras.
+/// Home: dois cards de acesso (Quebras e Inventário Rotativo).
 class HomeHubScreen extends StatefulWidget {
   const HomeHubScreen({super.key});
 
@@ -13,20 +11,6 @@ class HomeHubScreen extends StatefulWidget {
 }
 
 class _HomeHubScreenState extends State<HomeHubScreen> {
-  String _nome = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _carregarUsuario();
-  }
-
-  Future<void> _carregarUsuario() async {
-    final session = await SessionManager.create();
-    if (!mounted) return;
-    setState(() => _nome = session.getUserName() ?? '');
-  }
-
   Future<void> _onPopInvoked(bool didPop, Object? result) async {
     if (didPop) return;
     final sair = await showDialog<bool>(
@@ -54,7 +38,7 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
       canPop: false,
       onPopInvokedWithResult: _onPopInvoked,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF2F2F2),
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
@@ -67,87 +51,85 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
                   fontWeight: FontWeight.bold,
                   fontSize: 20)),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (_nome.isNotEmpty) ...[
-                Text('Olá, $_nome',
-                    style: const TextStyle(
-                        color: Color(Constants.invTextSecondary), fontSize: 14)),
-                const SizedBox(height: 20),
-              ],
-              _badge(
-                titulo: 'Inventário Rotativo',
-                subtitulo: 'Contagem e ajuste de estoque',
-                child: SvgPicture.asset(
-                  'assets/drawables/ic_inventario.svg',
-                  width: 48,
-                  height: 48,
-                  colorFilter: const ColorFilter.mode(
-                      Color(Constants.primaryRed), BlendMode.srcIn),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _card(
+                    icon: 'assets/drawables/quebra.png',
+                    title: 'Quebras',
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed('/quebra'),
+                  ),
                 ),
-                onTap: () => Navigator.of(context).pushNamed('/inventario'),
-              ),
-              const SizedBox(height: 20),
-              _badge(
-                titulo: 'Quebras',
-                subtitulo: 'Registro de itens quebrados',
-                child: const Icon(Icons.report_gmailerrorred_outlined,
-                    size: 48, color: Color(Constants.primaryRed)),
-                onTap: () => Navigator.of(context).pushNamed('/quebra'),
-              ),
-            ],
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _card(
+                    icon: 'assets/drawables/ir.png',
+                    title: 'Inventário\nRotativo',
+                    onPressed: () =>
+                        Navigator.of(context).pushNamed('/inventario'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _badge({
-    required String titulo,
-    required String subtitulo,
-    required Widget child,
-    required VoidCallback onTap,
+  Widget _card({
+    required String icon,
+    required String title,
+    required VoidCallback onPressed,
   }) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: onTap,
-      child: Container(
+    return Card(
+      elevation: 4,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(Constants.borderColor)),
-          boxShadow: const [
-            BoxShadow(
-                color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
-          ],
-        ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(width: 56, height: 56, child: Center(child: child)),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(titulo,
-                      style: const TextStyle(
-                          color: Color(Constants.invTextDark),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18)),
-                  const SizedBox(height: 4),
-                  Text(subtitulo,
-                      style: const TextStyle(
-                          color: Color(Constants.invTextSecondary),
-                          fontSize: 13)),
-                ],
+            SizedBox(
+              height: 72,
+              child: Center(
+                child: Image.asset(icon,
+                    width: 64, height: 64, fit: BoxFit.contain),
               ),
             ),
-            const Icon(Icons.chevron_right,
-                color: Color(Constants.invTextSecondary)),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF222222)),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(Constants.primaryRed),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: onPressed,
+                child: const Text('ACESSAR',
+                    style: TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.bold)),
+              ),
+            ),
           ],
         ),
       ),
