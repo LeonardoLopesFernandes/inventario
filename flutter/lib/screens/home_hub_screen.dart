@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 /// Home: cabeçalho vermelho + grade com 4 acessos.
 class HomeHubScreen extends StatefulWidget {
@@ -35,17 +34,10 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: SvgPicture.asset(
-                          'assets/drawables/logo_mloja.svg',
-                          width: 32,
-                          height: 32,
-                        ),
+                      Image.asset(
+                        'assets/drawables/logo_mloja.png',
+                        width: 40,
+                        height: 40,
                       ),
                       const SizedBox(width: 12),
                       const Text(

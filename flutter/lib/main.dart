@@ -19,9 +19,11 @@ import 'recebimento/screens/itens_screen.dart';
 import 'recebimento/screens/fotos_recebimento_screen.dart';
 import 'recebimento/screens/imagens_recebimento_screen.dart';
 import 'recebimento/screens/profile_screen.dart';
+import 'precificacao/core/session_manager.dart' as prec_session;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await prec_session.SessionManager.getInstance();
   runApp(const MyApp());
 }
 

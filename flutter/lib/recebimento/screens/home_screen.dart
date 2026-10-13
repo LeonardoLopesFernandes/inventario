@@ -100,38 +100,13 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-Future<void> _mostrarDialogoSaida(BuildContext context) async {
-  final sair = await showDialog<bool>(
-    context: context,
-    builder: (_) => AlertDialog(
-      backgroundColor: Colors.white,
-      title: const Text('Sair do aplicativo'),
-      content: const Text('Deseja realmente sair do aplicativo?'),
-      actions: [
-        TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Não')),
-        TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Sim')),
-      ],
-    ),
-  );
-  if (sair == true) SystemNavigator.pop();
-}
-
 class _HomeBody extends StatelessWidget {
   const _HomeBody();
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<MainProvider>(context);
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _mostrarDialogoSaida(context);
-      },
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: const Color(Constants.bgGray),
         drawer: const _AppDrawer(),
         body: Column(
@@ -186,7 +161,6 @@ class _HomeBody extends StatelessWidget {
           ),
         ],
       ),
-    ),
     );
   }
 
