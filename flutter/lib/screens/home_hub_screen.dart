@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../utils/constants.dart';
 
 /// Home: cabeçalho vermelho + grade com 4 acessos.
 class HomeHubScreen extends StatefulWidget {
@@ -11,39 +9,14 @@ class HomeHubScreen extends StatefulWidget {
 }
 
 class _HomeHubScreenState extends State<HomeHubScreen> {
-  Future<void> _onPopInvoked(bool didPop, Object? result) async {
-    if (didPop) return;
-    final sair = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text('Sair do aplicativo'),
-        content: const Text('Deseja realmente sair do aplicativo?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Não')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Sim')),
-        ],
-      ),
-    );
-    if (sair == true && mounted) SystemNavigator.pop();
-  }
-
-  void _emBreve(String nome) {}
-
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: _onPopInvoked,
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: const Color(0xFFF1F1F1),
         body: Column(
           children: [
             Container(
+              width: double.infinity,
               padding: EdgeInsets.only(
                 top: MediaQuery.of(context).padding.top + 8,
                 left: 16,
@@ -112,8 +85,7 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }
 
@@ -154,10 +126,10 @@ class _MenuCard extends StatelessWidget {
               children: [
                 Image.asset(
                   iconAsset,
-                  width: 30,
-                  height: 30,
+                  width: 48,
+                  height: 48,
                   errorBuilder: (_, __, ___) =>
-                      Icon(fallbackIcon, color: const Color(0xFFD32F2F), size: 28),
+                      Icon(fallbackIcon, color: const Color(0xFFD32F2F), size: 40),
                 ),
                 const Icon(Icons.star_border, color: Colors.grey, size: 22),
               ],
