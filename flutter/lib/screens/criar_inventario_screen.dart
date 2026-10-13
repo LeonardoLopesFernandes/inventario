@@ -158,10 +158,6 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
                             style: const TextStyle(
                                 color: Color(Constants.invTextSecondary),
                                 fontSize: 14)),
-                        Text('Saldo: ${p.stock.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                                color: Color(Constants.invTextSecondary),
-                                fontSize: 14)),
                       ],
                     ),
                   ),
@@ -181,11 +177,13 @@ class _CriarInventarioScreenState extends State<CriarInventarioScreen> {
                                 color: Color(Constants.invTextSecondary),
                                 fontSize: 12)),
                         const SizedBox(height: 4),
-                        Text('${_qtdAtualDoItem(p.ean)}',
-                            style: const TextStyle(
+                        Text('${p.stock.toStringAsFixed(0)}',
+                            style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: Color(Constants.invTextDark))),
+                                color: p.stock < 0
+                                    ? Colors.red
+                                    : const Color(Constants.invTextDark))),
                       ],
                     ),
                   ),

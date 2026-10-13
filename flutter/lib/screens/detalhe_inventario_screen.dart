@@ -244,9 +244,8 @@ class _ItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dif = item.diferenca;
-    final corDif = dif == 0
-        ? const Color(Constants.invTextSecondary)
-        : (dif > 0 ? const Color(Constants.badgeGreen) : Colors.red);
+    final corDif =
+        dif < 0 ? Colors.red : const Color(Constants.invTextDark);
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: onTap,
