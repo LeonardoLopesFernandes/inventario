@@ -88,3 +88,36 @@ class BreakagePage {
     );
   }
 }
+
+class BreakageItem {
+  final String id;
+  final String user;
+  final String sapCode;
+  final String ean;
+  final String description;
+  final int stock;
+  final int quantity;
+  final double costPrice;
+
+  BreakageItem({
+    required this.id,
+    required this.user,
+    required this.sapCode,
+    required this.ean,
+    required this.description,
+    required this.stock,
+    required this.quantity,
+    required this.costPrice,
+  });
+
+  factory BreakageItem.fromJson(Map<String, dynamic> j) => BreakageItem(
+        id: (j['id'] ?? j['_id'])?.toString() ?? '',
+        user: j['user']?.toString() ?? '',
+        sapCode: j['sapCode']?.toString() ?? '',
+        ean: j['ean']?.toString() ?? '',
+        description: j['description']?.toString().trim() ?? '',
+        stock: (j['stock'] as num?)?.toInt() ?? 0,
+        quantity: (j['quantity'] as num?)?.toInt() ?? 0,
+        costPrice: (j['costPrice'] as num?)?.toDouble() ?? 0,
+      );
+}

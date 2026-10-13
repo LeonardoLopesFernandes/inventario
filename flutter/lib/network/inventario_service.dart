@@ -226,4 +226,32 @@ class InventarioService {
     }
     throw Exception('Resposta inesperada ao criar quebra');
   }
+
+  /// Adiciona um item à quebra e retorna a lista de itens atualizada.
+  Future<List<BreakageItem>> addBreakageItem(
+    String breakageId, {
+    required String ean,
+    required String sapCode,
+    required String description,
+    required int stock,
+    required int quantity,
+    required String reasonId,
+    String entryMode = 'item',
+  }) async {
+    final data = await client.post('web/breakage/$breakageId/items', body: {
+      'ean': ean,
+      'sapCode': sapCode,
+      'description': description,
+      'stock': stock,
+      'quantity': quantity,
+      'reasonId': reasonId,
+      'entryMode': entryMode,
+    });
+    if (data is Map && data['data'] is List) {
+      return (data['data'] as List)
+          .map((e) => BreakageItem.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+    return const [];
+  }
 }

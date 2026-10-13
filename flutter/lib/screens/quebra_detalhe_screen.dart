@@ -7,22 +7,6 @@ import '../utils/constants.dart';
 import '../widgets/dialog_adicionar_quebra.dart';
 import 'scanner_ean_screen.dart';
 
-class _ItemQuebra {
-  final String ean;
-  final String sapCode;
-  final String description;
-  final int quantity;
-  final String motivo;
-
-  _ItemQuebra({
-    required this.ean,
-    required this.sapCode,
-    required this.description,
-    required this.quantity,
-    required this.motivo,
-  });
-}
-
 class QuebraDetalheScreen extends StatefulWidget {
   final String breakageId;
 
@@ -37,7 +21,7 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
   SessionManager? _session;
   InventarioService? _service;
   List<BreakageReason> _reasons = const [];
-  final List<_ItemQuebra> _itens = [];
+  List<BreakageItem> _itens = [];
   bool _buscando = false;
 
   @override
@@ -69,8 +53,7 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
     setState(() => _buscando = true);
     Product produto;
     try {
-      produto =
-          await _service!.getProductStore(storeId: _storeId, ean: valor);
+      produto = await _service!.getProductStore(storeId: _storeId, ean: valor);
     } catch (_) {
       if (!mounted) return;
       setState(() => _buscando = false);
@@ -82,23 +65,31 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
     setState(() => _buscando = false);
     final res = await mostrarDialogAdicionarQuebra(context,
         produto: produto, motivos: _reasons);
-    if (res == null || res.action == QuebraDialogAction.cancelar) return;
-    setState(() {
-      _itens.add(_ItemQuebra(
+    if (res == null ||
+        res.action == QuebraDialogAction.cancelar ||
+        res.motivo == null) {
+      return;
+    }
+    try {
+      final itens = await _service!.addBreakageItem(
+        widget.breakageId,
         ean: produto.ean,
         sapCode: produto.sapCode,
         description: produto.description,
+        stock: produto.stock.toInt(),
         quantity: res.quantidade,
-        motivo: res.motivo?.label ?? '',
-      ));
-    });
-    _buscaController.clear();
-    if (res.action == QuebraDialogAction.confirmar) {
-      // TODO: enviar os itens ao backend (POST pendente) e finalizar.
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Item(ns) adicionado(s) localmente') ));
-      }
+        reasonId: res.motivo!.id,
+      );
+      if (!mounted) return;
+      setState(() => _itens = itens);
+      _buscaController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Item adicionado à quebra'),
+          backgroundColor: Color(Constants.badgeGreen)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao adicionar item'), backgroundColor: Colors.red));
     }
   }
 
@@ -257,11 +248,6 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
                         style: const TextStyle(
                             color: Color(Constants.invTextSecondary),
                             fontSize: 12)),
-                    if (it.motivo.isNotEmpty)
-                      Text('Motivo: ${it.motivo}',
-                          style: const TextStyle(
-                              color: Color(Constants.invTextSecondary),
-                              fontSize: 12)),
                   ],
                 ),
               ),
