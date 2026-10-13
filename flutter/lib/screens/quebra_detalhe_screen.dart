@@ -118,6 +118,159 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
     }
   }
 
+  Future<void> _descartarQuebra() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Descartar quebra'),
+        content: const Text(
+            'A quebra será removida e os itens descartados. Deseja continuar?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Não')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sim')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _service!.deleteBreakage(widget.breakageId);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao descartar quebra'),
+          backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> _abrirQuebra() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Abrir quebra'),
+        content: const Text(
+            'Deseja abrir (processar) a quebra? Depois não será possível alterar os itens.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Não')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sim')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _service!.processBreakage(widget.breakageId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Quebra aberta com sucesso'),
+          backgroundColor: Color(Constants.badgeGreen)));
+      Navigator.of(context).pop(true);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao abrir quebra'), backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> _editarItem(BreakageItem it) async {
+    final qtdController = TextEditingController(text: '${it.quantity}');
+    BreakageReason? motivo;
+    for (final m in _reasons) {
+      if (m.label == it.reason) {
+        motivo = m;
+        break;
+      }
+    }
+    motivo ??= _reasons.isNotEmpty ? _reasons.first : null;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('Alterar item da quebra'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(it.description,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Color(Constants.invTextDark))),
+              const SizedBox(height: 4),
+              Text('EAN ${it.ean}   •   SAP ${it.sapCode}',
+                  style: const TextStyle(
+                      color: Color(Constants.invTextSecondary), fontSize: 12)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: qtdController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Quantidade a quebrar',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<BreakageReason>(
+                value: motivo,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Motivo',
+                  border: OutlineInputBorder(),
+                ),
+                items: _reasons
+                    .map((m) => DropdownMenuItem(
+                          value: m,
+                          child: Text(m.label),
+                        ))
+                    .toList(),
+                onChanged: (v) => setDlg(() => motivo = v),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancelar')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(Constants.primaryRed),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Salvar'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok != true) return;
+    try {
+      final lista = await _service!.updateBreakageItem(
+        widget.breakageId,
+        it.id,
+        quantity: int.tryParse(qtdController.text.trim()) ?? it.quantity,
+        reasonId: motivo?.id ?? '',
+      );
+      if (!mounted) return;
+      setState(() => _itens = lista ?? _itens);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao alterar item'), backgroundColor: Colors.red));
+    }
+  }
+
   Future<void> _removerItem(BreakageItem it) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -203,6 +356,46 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
             ],
             const SizedBox(height: 12),
             Expanded(child: _corpo()),
+            if (!_somenteLeitura) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _descartarQuebra,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(Constants.primaryRed),
+                        side: const BorderSide(
+                            color: Color(Constants.primaryRed)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('DESCARTAR QUEBRA',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _abrirQuebra,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(Constants.primaryRed),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('ABRIR QUEBRA',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
           ],
         ),
       ),
@@ -311,6 +504,7 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
         return InkWell(
           borderRadius: BorderRadius.circular(8),
           onLongPress: _somenteLeitura ? null : () => _removerItem(it),
+          onTap: _somenteLeitura ? null : () => _editarItem(it),
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(

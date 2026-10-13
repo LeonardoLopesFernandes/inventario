@@ -284,4 +284,26 @@ class InventarioService {
   Future<void> deleteBreakage(String breakageId) async {
     await client.delete('web/breakage/$breakageId');
   }
+
+  /// Altera quantidade/motivo de um item da quebra.
+  Future<List<BreakageItem>?> updateBreakageItem(
+    String breakageId,
+    String itemId, {
+    required int quantity,
+    required String reasonId,
+  }) async {
+    final data = await client.put('web/breakage/$breakageId/items/$itemId',
+        body: {'quantity': quantity, 'reasonId': reasonId});
+    if (data is Map && data['data'] is List) {
+      return (data['data'] as List)
+          .map((e) => BreakageItem.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+    return null;
+  }
+
+  /// Processa (abre/finaliza) a quebra.
+  Future<void> processBreakage(String breakageId) async {
+    await client.post('web/breakage/$breakageId/process');
+  }
 }
