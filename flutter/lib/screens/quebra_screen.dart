@@ -62,6 +62,45 @@ class _QuebraScreenState extends State<QuebraScreen> {
     }
   }
 
+  Future<void> _abrirDetalhe(Breakage b) async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => QuebraDetalheScreen(breakageId: b.id),
+    ));
+    _carregar(reset: true);
+  }
+
+  Future<void> _removerQuebra(Breakage b) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Remover quebra'),
+        content: Text('Deseja remover a quebra de ${b.user}?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Não')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sim')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _service!.deleteBreakage(b.id);
+      if (!mounted) return;
+      setState(() => _items.removeWhere((e) => e.id == b.id));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Quebra removida'),
+          backgroundColor: Color(Constants.badgeGreen)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao remover quebra'), backgroundColor: Colors.red));
+    }
+  }
+
   Future<void> _carregar({bool reset = false}) async {
     if (_carregando) return;
     if (!reset && _isLastPage) return;
@@ -166,16 +205,33 @@ class _QuebraScreenState extends State<QuebraScreen> {
         padding: const EdgeInsets.all(16),
         itemCount: _items.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (_, i) => InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () async {
-            await Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => QuebraDetalheScreen(breakageId: _items[i].id),
-            ));
-            _carregar(reset: true);
-          },
-          child: _BreakageCard(breakage: _items[i]),
-        ),
+        itemBuilder: (_, i) {
+          final b = _items[i];
+          Widget? menu;
+          if (!b.processado) {
+            menu = PopupMenuButton<String>(
+              color: Colors.white,
+              icon: const Icon(Icons.more_vert,
+                  color: Color(Constants.invTextDark), size: 20),
+              onSelected: (v) {
+                if (v == 'detalhes') {
+                  _abrirDetalhe(b);
+                } else if (v == 'remover') {
+                  _removerQuebra(b);
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'detalhes', child: Text('Detalhes')),
+                PopupMenuItem(value: 'remover', child: Text('Remover quebra')),
+              ],
+            );
+          }
+          return InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => _abrirDetalhe(b),
+            child: _BreakageCard(breakage: b, trailing: menu),
+          );
+        },
       ),
     );
   }
@@ -183,8 +239,9 @@ class _QuebraScreenState extends State<QuebraScreen> {
 
 class _BreakageCard extends StatelessWidget {
   final Breakage breakage;
+  final Widget? trailing;
 
-  const _BreakageCard({required this.breakage});
+  const _BreakageCard({required this.breakage, this.trailing});
 
   String _dataFmt(String iso) {
     final d = DateTime.tryParse(iso);
@@ -239,6 +296,7 @@ class _BreakageCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         fontSize: 12)),
               ),
+              if (trailing != null) trailing!,
             ],
           ),
           const SizedBox(height: 10),

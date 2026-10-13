@@ -279,4 +279,9 @@ class InventarioService {
         as Map<String, dynamic>;
     return BreakageDetail.fromJson(json);
   }
+
+  /// Remove a quebra.
+  Future<void> deleteBreakage(String breakageId) async {
+    await client.delete('web/breakage/$breakageId');
+  }
 }

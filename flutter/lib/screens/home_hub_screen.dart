@@ -54,27 +54,29 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _card(
-                    icon: 'assets/drawables/quebra.png',
-                    title: 'Quebras',
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed('/quebra'),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _card(
+                      icon: 'assets/drawables/quebra.png',
+                      title: 'Quebras',
+                      onPressed: () =>
+                          Navigator.of(context).pushNamed('/quebra'),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _card(
-                    icon: 'assets/drawables/ir.png',
-                    title: 'Inventário\nRotativo',
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed('/inventario'),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _card(
+                      icon: 'assets/drawables/ir.png',
+                      title: 'Inventário\nRotativo',
+                      onPressed: () =>
+                          Navigator.of(context).pushNamed('/inventario'),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -94,7 +96,6 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
               height: 72,
@@ -112,7 +113,7 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF222222)),
             ),
-            const SizedBox(height: 20),
+            const Spacer(),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
