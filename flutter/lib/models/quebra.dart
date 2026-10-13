@@ -26,41 +26,45 @@ class BreakageReason {
 
 class Breakage {
   final String id;
-  final String ean;
-  final String sapCode;
-  final String description;
-  final int quantity;
-  final String reason;
-  final String createdAt;
+  final String store;
+  final String user;
+  final String email;
+  final String date;
   final String status;
+  final int itemsQuantity;
 
   Breakage({
     required this.id,
-    required this.ean,
-    required this.sapCode,
-    required this.description,
-    required this.quantity,
-    required this.reason,
-    required this.createdAt,
+    required this.store,
+    required this.user,
+    required this.email,
+    required this.date,
     required this.status,
+    required this.itemsQuantity,
   });
 
   factory Breakage.fromJson(Map<String, dynamic> j) => Breakage(
         id: (j['id'] ?? j['_id'])?.toString() ?? '',
-        ean: (j['ean'] ?? j['EAN'])?.toString() ?? '',
-        sapCode: (j['sapCode'] ?? j['sap'])?.toString() ?? '',
-        description:
-            (j['description'] ?? j['descricao'])?.toString().trim() ?? '',
-        quantity: (j['quantity'] ??
-                j['quantidade'] ??
-                j['breakageQuantity'] as num?)
-            ?.toInt() ??
-            0,
-        reason: (j['reason'] ?? j['motivo'])?.toString() ?? '',
-        createdAt:
-            (j['createdAt'] ?? j['date'] ?? j['data'])?.toString() ?? '',
+        store: j['store']?.toString() ?? '',
+        user: j['user']?.toString() ?? '',
+        email: j['email']?.toString() ?? '',
+        date: (j['date'] ?? j['createdAt'])?.toString() ?? '',
         status: j['status']?.toString() ?? '',
+        itemsQuantity: (j['itemsQuantity'] as num?)?.toInt() ?? 0,
       );
+
+  bool get processado => status.toUpperCase() == 'PROCESSED';
+
+  String get statusLabel {
+    switch (status.toUpperCase()) {
+      case 'PROCESSED':
+        return 'Processado';
+      case 'PENDING':
+        return 'Em andamento';
+      default:
+        return status;
+    }
+  }
 }
 
 class BreakagePage {

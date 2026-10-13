@@ -76,11 +76,13 @@ class _QuebraScreenState extends State<QuebraScreen> {
       }
     });
     try {
+      final now = DateTime.now();
       final page = await service.getBreakages(
-        year: DateTime.now().year,
+        year: now.year,
+        month: now.month,
         store: _storeId,
         offset: reset ? 0 : _offset,
-        limit: 15,
+        limit: 50,
       );
       if (!mounted) return;
       setState(() {
@@ -175,8 +177,21 @@ class _BreakageCard extends StatelessWidget {
 
   const _BreakageCard({required this.breakage});
 
+  String _dataFmt(String iso) {
+    final d = DateTime.tryParse(iso);
+    if (d == null) return iso;
+    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final processado = breakage.processado;
+    final badgeBg = processado
+        ? const Color(Constants.invBadgeGreenBg)
+        : const Color(0xFFFFF3CD);
+    final badgeFg = processado
+        ? const Color(Constants.invBadgeGreenText)
+        : const Color(0xFF8A6D00);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -195,34 +210,39 @@ class _BreakageCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  breakage.description.isNotEmpty
-                      ? breakage.description
-                      : (breakage.id.isEmpty ? 'Quebra' : breakage.id),
+                  breakage.user.isEmpty ? 'Quebra' : breakage.user,
                   style: const TextStyle(
                       color: Color(Constants.invTextDark),
                       fontWeight: FontWeight.bold,
                       fontSize: 16),
                 ),
               ),
-              if (breakage.quantity != 0)
-                Text('${breakage.quantity}',
-                    style: const TextStyle(
-                        color: Color(Constants.invTextDark),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(breakage.statusLabel,
+                    style: TextStyle(
+                        color: badgeFg,
                         fontWeight: FontWeight.bold,
-                        fontSize: 16)),
+                        fontSize: 12)),
+              ),
             ],
           ),
-          if (breakage.ean.isNotEmpty || breakage.sapCode.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text('${breakage.store}   •   ${_dataFmt(breakage.date)}',
+              style: const TextStyle(
+                  color: Color(Constants.invTextSecondary), fontSize: 12)),
+          if (processado && breakage.itemsQuantity > 0) ...[
             const SizedBox(height: 6),
-            Text('EAN ${breakage.ean}   •   SAP ${breakage.sapCode}',
+            Text('Itens: ${breakage.itemsQuantity}',
                 style: const TextStyle(
-                    color: Color(Constants.invTextSecondary), fontSize: 12)),
-          ],
-          if (breakage.reason.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text('Motivo: ${breakage.reason}',
-                style: const TextStyle(
-                    color: Color(Constants.invTextSecondary), fontSize: 12)),
+                    color: Color(Constants.invTextDark),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500)),
           ],
         ],
       ),

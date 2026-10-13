@@ -178,17 +178,23 @@ class InventarioService {
   Future<BreakagePage> getBreakages({
     required int year,
     required String store,
+    int? month,
     int offset = 0,
-    int limit = 15,
-    bool mainPageFilter = true,
+    int limit = 50,
+    bool? mainPageFilter,
   }) async {
-    final json = await client.get('web/breakage', query: {
+    final query = <String, String>{
       'year': '$year',
       'store': store,
       'offset': '$offset',
       'limit': '$limit',
-      'mainPageFilter': '$mainPageFilter',
-    }) as Map<String, dynamic>;
+    };
+    if (month != null) query['month'] = '$month';
+    if (mainPageFilter != null) {
+      query['mainPageFilter'] = '$mainPageFilter';
+    }
+    final json = await client.get('web/breakage', query: query)
+        as Map<String, dynamic>;
     return BreakagePage.fromJson(json);
   }
 
