@@ -209,4 +209,21 @@ class InventarioService {
     }
     return const [];
   }
+
+  /// Cria uma quebra e retorna o objeto criado.
+  Future<Breakage> createBreakage({
+    required String storeId,
+    required String userName,
+    required String userEmail,
+  }) async {
+    final data = await client.post('web/breakage', body: {
+      'storeId': storeId,
+      'user': {'name': userName, 'email': userEmail},
+    });
+    if (data is Map && data['breakage'] is Map) {
+      return Breakage.fromJson(
+          Map<String, dynamic>.from(data['breakage'] as Map));
+    }
+    throw Exception('Resposta inesperada ao criar quebra');
+  }
 }

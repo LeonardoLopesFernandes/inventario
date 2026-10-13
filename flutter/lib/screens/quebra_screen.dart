@@ -3,6 +3,7 @@ import '../models/quebra.dart';
 import '../network/inventario_service.dart';
 import '../network/session_manager.dart';
 import '../utils/constants.dart';
+import 'quebra_detalhe_screen.dart';
 
 class QuebraScreen extends StatefulWidget {
   const QuebraScreen({super.key});
@@ -38,6 +39,28 @@ class _QuebraScreenState extends State<QuebraScreen> {
   }
 
   String get _storeId => _session?.getUserStore() ?? Constants.defaultStore;
+
+  Future<void> _novaQuebra() async {
+    final service = _service;
+    final session = _session;
+    if (service == null) return;
+    try {
+      final b = await service.createBreakage(
+        storeId: _storeId,
+        userName: session?.getUserName() ?? '',
+        userEmail: session?.getUserEmail() ?? '',
+      );
+      if (!mounted) return;
+      await Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => QuebraDetalheScreen(breakageId: b.id),
+      ));
+      _carregar(reset: true);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao criar quebra'), backgroundColor: Colors.red));
+    }
+  }
 
   Future<void> _carregar({bool reset = false}) async {
     if (_carregando) return;
@@ -94,10 +117,7 @@ class _QuebraScreenState extends State<QuebraScreen> {
       ),
       body: _corpo(),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Nova quebra (aguardando endpoint)')));
-        },
+        onPressed: _novaQuebra,
         backgroundColor: const Color(Constants.primaryRed),
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
