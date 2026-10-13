@@ -16,6 +16,7 @@ class QuebraScreen extends StatefulWidget {
 }
 
 class _QuebraScreenState extends State<QuebraScreen> {
+  final TextEditingController _buscaController = TextEditingController();
   SessionManager? _session;
   InventarioService? _service;
 
@@ -24,6 +25,7 @@ class _QuebraScreenState extends State<QuebraScreen> {
   bool _isLastPage = false;
   String? _erro;
   int _offset = 0;
+  String _chip = 'Todas';
 
   @override
   void initState() {
@@ -100,7 +102,8 @@ class _QuebraScreenState extends State<QuebraScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Falha ao remover quebra'), backgroundColor: Colors.red));
+          content: Text('Falha ao remover quebra'),
+          backgroundColor: Colors.red));
     }
   }
 
@@ -143,39 +146,155 @@ class _QuebraScreenState extends State<QuebraScreen> {
     }
   }
 
+  List<Breakage> get _filtrados {
+    var lista = _items;
+    if (_chip == 'Aberta') {
+      lista = lista
+          .where((b) =>
+              ['PENDING', 'ABERTA', 'OPEN'].contains(b.status.toUpperCase()))
+          .toList();
+    } else if (_chip == 'Em andamento') {
+      lista = lista
+          .where((b) => ['IN_PROGRESS', 'EM_ANDAMENTO']
+              .contains(b.status.toUpperCase()))
+          .toList();
+    }
+    final q = _buscaController.text.trim().toLowerCase();
+    if (q.isNotEmpty) {
+      lista = lista
+          .where((b) =>
+              b.user.toLowerCase().contains(q) ||
+              b.store.toLowerCase().contains(q) ||
+              b.id.toLowerCase().contains(q) ||
+              formatDataBr(b.date).contains(q))
+          .toList();
+    }
+    return lista;
+  }
+
+  @override
+  void dispose() {
+    _buscaController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(Constants.bgGray),
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        centerTitle: true,
         iconTheme: const IconThemeData(color: Color(Constants.invTextDark)),
-        title: const Text('Quebra de itens',
-            style: TextStyle(
-                color: Color(Constants.invTextDark),
-                fontWeight: FontWeight.bold,
-                fontSize: 20)),
+        title: Text(
+          widget.apenasConsulta
+              ? 'Consultar quebras'
+              : 'Cadastrar e processar quebra',
+          style: const TextStyle(
+              color: Color(Constants.invTextDark),
+              fontSize: 18,
+              fontWeight: FontWeight.w500),
+        ),
       ),
-      body: _corpo(),
+      body: Column(
+        children: [
+          if (!widget.apenasConsulta)
+            Container(
+              width: double.infinity,
+              color: const Color(0xFF3F51B5),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: const Text(
+                'Esta lista mostra apenas as quebras de hoje e as quebras ainda abertas ou pendentes.',
+                style: TextStyle(color: Colors.white, fontSize: 13, height: 1.4),
+              ),
+            ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFEFEF),
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: TextField(
+                controller: _buscaController,
+                onChanged: (_) => setState(() {}),
+                decoration: const InputDecoration(
+                  hintText: 'Buscar',
+                  hintStyle: TextStyle(color: Colors.grey),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 15),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                _chipWidget('Todas'),
+                const SizedBox(width: 8),
+                _chipWidget('Aberta'),
+                const SizedBox(width: 8),
+                _chipWidget('Em andamento'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(child: _corpo()),
+        ],
+      ),
       floatingActionButton: widget.apenasConsulta
           ? null
-          : FloatingActionButton.extended(
+          : FloatingActionButton(
               onPressed: _novaQuebra,
-        backgroundColor: const Color(Constants.primaryRed),
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        icon: const Icon(Icons.add),
-        label: const Text('Nova quebra',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              backgroundColor: const Color(Constants.primaryRed),
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            ),
+    );
+  }
+
+  Widget _chipWidget(String label) {
+    final selecionado = _chip == label;
+    return GestureDetector(
+      onTap: () => setState(() => _chip = label),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: selecionado ? const Color(Constants.primaryRed) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: selecionado
+                  ? const Color(Constants.primaryRed)
+                  : Colors.grey.shade300),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selecionado)
+              const Padding(
+                padding: EdgeInsets.only(right: 6),
+                child: Icon(Icons.check, color: Colors.white, size: 16),
+              ),
+            Text(label,
+                style: TextStyle(
+                    color: selecionado ? Colors.white : const Color(0xFF222222),
+                    fontWeight: FontWeight.w500)),
+          ],
+        ),
       ),
     );
   }
 
   Widget _corpo() {
-    if ((_carregando && _items.isEmpty)) {
+    if (_carregando && _items.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
     if (_erro != null && _items.isEmpty) {
@@ -193,13 +312,22 @@ class _QuebraScreenState extends State<QuebraScreen> {
         ),
       );
     }
-    if (_items.isEmpty) {
+    final lista = _filtrados;
+    if (lista.isEmpty) {
       return RefreshIndicator(
         onRefresh: () => _carregar(reset: true),
         child: ListView(
           children: const [
             SizedBox(height: 120),
-            Center(child: Text('Nenhuma quebra encontrada')),
+            Icon(Icons.inbox_outlined, size: 48, color: Colors.grey),
+            SizedBox(height: 12),
+            Center(
+              child: Text('Nenhuma quebra disponível',
+                  style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500)),
+            ),
           ],
         ),
       );
@@ -207,11 +335,11 @@ class _QuebraScreenState extends State<QuebraScreen> {
     return RefreshIndicator(
       onRefresh: () => _carregar(reset: true),
       child: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: _items.length,
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
+        itemCount: lista.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (_, i) {
-          final b = _items[i];
+          final b = lista[i];
           Widget? menu;
           if (!b.processado && !widget.apenasConsulta) {
             menu = PopupMenuButton<String>(
@@ -248,8 +376,6 @@ class _BreakageCard extends StatelessWidget {
 
   const _BreakageCard({required this.breakage, this.trailing});
 
-  String _dataFmt(String iso) => formatDataBr(iso);
-
   @override
   Widget build(BuildContext context) {
     final processado = breakage.processado;
@@ -263,7 +389,7 @@ class _BreakageCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: const [
           BoxShadow(
               color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
@@ -301,7 +427,7 @@ class _BreakageCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Text('${breakage.store}   •   ${_dataFmt(breakage.date)}',
+          Text('${breakage.store}   •   ${formatDataBr(breakage.date)}',
               style: const TextStyle(
                   color: Color(Constants.invTextSecondary), fontSize: 12)),
           if (processado && breakage.itemsQuantity > 0) ...[

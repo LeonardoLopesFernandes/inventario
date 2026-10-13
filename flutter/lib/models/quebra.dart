@@ -60,6 +60,11 @@ class Breakage {
       case 'PROCESSED':
         return 'Processado';
       case 'PENDING':
+      case 'ABERTA':
+      case 'OPEN':
+        return 'Aberta';
+      case 'IN_PROGRESS':
+      case 'EM_ANDAMENTO':
         return 'Em andamento';
       default:
         return status;
