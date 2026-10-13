@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Inventário',
+        title: 'Minha Loja | Operações',
       debugShowCheckedModeBanner: false,
       navigatorKey: appNavigatorKey,
       localizationsDelegates: const [
