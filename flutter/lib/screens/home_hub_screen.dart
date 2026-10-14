@@ -48,6 +48,13 @@ const List<_Hub> _hubs = [
     title: 'Quebra',
     rota: '/quebras',
   ),
+  _Hub(
+    id: 'trocafacil',
+    iconAsset: 'assets/drawables/trocafacil.png',
+    fallbackIcon: Icons.swap_horiz,
+    title: 'Troca Fácil',
+    rota: '/troca_facil',
+  ),
 ];
 
 /// Home: cabeçalho vermelho + grade com 4 acessos.

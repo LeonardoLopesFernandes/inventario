@@ -11,6 +11,11 @@ import 'screens/quebra_screen.dart';
 import 'screens/quebras_menu_screen.dart';
 import 'screens/precificacao_menu_screen.dart';
 import 'screens/home_hub_screen.dart';
+import 'trocafacil/screens/troca_facil_menu_screen.dart';
+import 'trocafacil/screens/realizar_troca_etapa1_screen.dart';
+import 'trocafacil/screens/lista_operacoes_screen.dart';
+import 'trocafacil/screens/filtrar_operacoes_screen.dart';
+import 'trocafacil/screens/troca_login_webview.dart';
 import 'precificacao/screens/etiquetas/etiquetas_fragment.dart';
 import 'precificacao/screens/papeletas/papeletas_fragment.dart';
 import 'precificacao/screens/barcode/barcode_scanner_screen.dart';
@@ -124,6 +129,12 @@ class MyApp extends StatelessWidget {
         },
         '/modelo_editavel': (ctx) => const ModeloEditavelScreen(),
         '/pdf_viewer': (ctx) => const PdfViewerScreen(),
+        '/troca_facil': (ctx) => const TrocaFacilMenuScreen(),
+        '/troca_login': (ctx) => const TrocaLoginWebViewScreen(),
+        '/troca_realizar': (ctx) => const RealizarTrocaEtapa1Screen(),
+        '/troca_etapa2': (ctx) => const _EmBreve('Realizar troca (2/2)'),
+        '/troca_operacoes': (ctx) => const ListaOperacoesScreen(),
+        '/troca_operacoes_filtro': (ctx) => const FiltrarOperacoesScreen(),
         '/home': (ctx) => const HomeHubScreen(),
       },
     );
@@ -160,6 +171,34 @@ class _SplashDeciderState extends State<SplashDecider> {
       backgroundColor: Color(Constants.primaryRed),
       body: Center(
         child: TruckLoader(),
+      ),
+    );
+  }
+}
+
+/// Placeholder temporário para telas ainda não implementadas.
+class _EmBreve extends StatelessWidget {
+  final String titulo;
+  const _EmBreve(this.titulo);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF1F1F1),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black87),
+        title: Text(titulo,
+            style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 18,
+                fontWeight: FontWeight.w500)),
+      ),
+      body: const Center(
+        child: Text('Em breve',
+            style: TextStyle(color: Colors.black54, fontSize: 16)),
       ),
     );
   }
