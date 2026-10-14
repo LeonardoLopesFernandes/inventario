@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../widgets/truck_loader.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import '../widgets/auth_loader.dart';
 import '../network/session_manager.dart';
 import '../network/inventario_service.dart';
 import '../utils/constants.dart';
@@ -294,9 +294,7 @@ class _CarregamentoWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: const Color(Constants.primaryRed),
-      child: const Center(
-        child: TruckLoader(status: 'Autenticando...'),
-      ),
+      child: const AuthLoader(),
     );
   }
 }
