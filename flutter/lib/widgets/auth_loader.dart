@@ -8,8 +8,8 @@ class AuthLoader extends StatefulWidget {
 
   const AuthLoader({
     super.key,
-    this.titulo = 'Autenticando...',
-    this.subtitulo = 'Aguarde enquanto verificamos suas credenciais',
+    this.titulo = 'Loja Mobile',
+    this.subtitulo = 'Autenticando...',
   });
 
   @override

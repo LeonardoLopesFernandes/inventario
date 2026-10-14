@@ -11,8 +11,8 @@ import 'screens/quebra_screen.dart';
 import 'screens/quebras_menu_screen.dart';
 import 'screens/precificacao_menu_screen.dart';
 import 'screens/home_hub_screen.dart';
-import 'precificacao/screens/etiquetas/etiquetas_screen.dart';
-import 'precificacao/screens/papeletas/papeletas_diarias_screen.dart';
+import 'precificacao/screens/etiquetas/etiquetas_fragment.dart';
+import 'precificacao/screens/papeletas/papeletas_fragment.dart';
 import 'recebimento/screens/home_screen.dart';
 import 'recebimento/screens/detalhes_viagem_screen.dart';
 import 'recebimento/screens/itens_screen.dart';
@@ -72,8 +72,32 @@ class MyApp extends StatelessWidget {
         '/inventario': (ctx) => const ListaInventarioScreen(),
         '/quebras': (ctx) => const QuebrasMenuScreen(),
         '/precificacao': (ctx) => const PrecificacaoMenuScreen(),
-        '/precificacao_etiquetas': (ctx) => const EtiquetasScreen(),
-        '/precificacao_papeletas': (ctx) => const PapeletasDiariasScreen(),
+        '/precificacao_etiquetas': (ctx) => Scaffold(
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                elevation: 0,
+                iconTheme: const IconThemeData(color: Color(0xFF212121)),
+                title: const Text('Etiquetas Avulsas',
+                    style: TextStyle(
+                        color: Color(0xFF212121),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500)),
+              ),
+              body: const EtiquetasFragment(),
+            ),
+        '/precificacao_papeletas': (ctx) => Scaffold(
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                elevation: 0,
+                iconTheme: const IconThemeData(color: Color(0xFF212121)),
+                title: const Text('Papeletas Avulsas',
+                    style: TextStyle(
+                        color: Color(0xFF212121),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500)),
+              ),
+              body: const PapeletasFragment(),
+            ),
         '/recebimento': (ctx) => const HomeScreen(),
         '/detalhes': (ctx) => const DetalhesViagemScreen(),
         '/itens': (ctx) => const ItensScreen(),
