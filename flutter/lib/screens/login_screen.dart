@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../network/session_manager.dart';
 import '../utils/constants.dart';
 
@@ -71,12 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(14),
-                        child: SvgPicture.asset(
-                          'assets/drawables/ic_inventario.svg',
-                          fit: BoxFit.contain,
-                          colorFilter: const ColorFilter.mode(
-                              Colors.white, BlendMode.srcIn),
-                        ),
+                        child: _LogoLogin(),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -250,6 +244,47 @@ class _MicrosoftLogo extends StatelessWidget {
           ]),
         ],
       ),
+    );
+  }
+}
+
+/// Logo do login (loja.png) com efeito de pulso (escala + fade).
+class _LogoLogin extends StatefulWidget {
+  @override
+  State<_LogoLogin> createState() => _LogoLoginState();
+}
+
+class _LogoLoginState extends State<_LogoLogin>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, child) {
+        final t = Curves.easeInOut.transform(_c.value);
+        return Transform.scale(
+          scale: 1.0 + 0.08 * t,
+          child: Opacity(opacity: 0.85 + 0.15 * t, child: child),
+        );
+      },
+      child: Image.asset('assets/drawables/loja.png', fit: BoxFit.contain),
     );
   }
 }
