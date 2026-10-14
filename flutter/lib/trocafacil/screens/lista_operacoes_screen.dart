@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:inventario/precificacao/utils/toast_utils.dart';
 import '../models/avaliacao.dart';
 import '../network/troca_api.dart';
@@ -46,6 +47,7 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
         startDate: _filtros['startDate'] ?? _yyyyMMdd(inicio),
         finalDate: _filtros['finalDate'] ?? _yyyyMMdd(hoje),
         page: _page,
+        sort: int.tryParse(_filtros['sort'] ?? '-1') ?? -1,
         status: _filtros['status'],
         operation: _filtros['operation'],
         cause: _filtros['cause'],
@@ -82,27 +84,41 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
     }
   }
 
+  String? _toCompact(String? ddMMyyyy) {
+    if (ddMMyyyy == null || ddMMyyyy.length != 10) return null;
+    final p = ddMMyyyy.split('/');
+    if (p.length != 3) return null;
+    return '${p[2]}${p[1]}${p[0]}';
+  }
+
   Future<void> _abrirFiltro() async {
     final r = await Navigator.of(context).pushNamed('/troca_operacoes_filtro');
     if (r is Map) {
+      final num = (r['numero'] as String?)?.trim();
+      final cliente = (r['cliente'] as String?)?.trim();
+      final dataAv = _toCompact(r['dataAvaliacao'] as String?);
+      final dataCompra = _toCompact(r['dataCompra'] as String?);
+      final operacao = r['operacao'] as String?;
+      final motivo = r['motivo'] as String?;
       setState(() {
         _filtros = {
-          'tradeId': (r['numero'] as String?)?.isNotEmpty == true
-              ? r['numero'] as String
-              : null,
-          'operation':
-              (r['operacao'] as String?) == 'Troca' ? 'TROCA' : null,
-          'cause': (r['motivo'] as String?) == 'Insatisfação'
+          'tradeId': (num != null && num.isNotEmpty) ? num : null,
+          'operation': operacao == 'Troca'
+              ? 'TROCA'
+              : operacao == 'Devolução'
+                  ? 'DEVOLUCAO'
+                  : null,
+          'cause': motivo == 'Insatisfação'
               ? 'INSATISFACAO'
-              : (r['motivo'] as String?) == 'Defeito'
+              : motivo == 'Defeito'
                   ? 'DEFEITO'
                   : null,
-          'costumerName': (r['cliente'] as String?)?.isNotEmpty == true
-              ? r['cliente'] as String
-              : null,
-          'transactionDate': (r['dataCompra'] as String?),
-          'startDate': null,
-          'finalDate': null,
+          'costumerName':
+              (cliente != null && cliente.isNotEmpty) ? cliente : null,
+          'transactionDate': dataCompra,
+          'startDate': dataAv,
+          'finalDate': dataAv,
+          'sort': (r['ordenarOrdem'] == 'Crescente') ? '1' : '-1',
         };
       });
       _carregar();
@@ -262,16 +278,27 @@ class OperacaoCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    Text(
-                      operacao.tradeId,
-                      style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87),
+                    Flexible(
+                      child: Text(
+                        operacao.tradeId,
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87),
+                      ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.copy_outlined,
-                        size: 16, color: Colors.black54),
+                    InkWell(
+                      onTap: () async {
+                        await Clipboard.setData(
+                            ClipboardData(text: operacao.tradeId));
+                        if (context.mounted) {
+                          ToastUtils.show(context, 'Número copiado');
+                        }
+                      },
+                      child: const Icon(Icons.copy_outlined,
+                          size: 16, color: Colors.black54),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),

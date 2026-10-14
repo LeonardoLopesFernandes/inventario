@@ -16,7 +16,7 @@ class RealizarTrocaEtapa2Screen extends StatefulWidget {
 
 class _RealizarTrocaEtapa2ScreenState
     extends State<RealizarTrocaEtapa2Screen> {
-  static const List<String> _motivosDefeito = [
+  static const List<String> _motivos = [
     'Bateria',
     'Avariado (Arranhado, rasgado, furado)',
     'Tela com defeito',
@@ -25,13 +25,6 @@ class _RealizarTrocaEtapa2ScreenState
     'Fora da validade',
     'Faltando peças',
     'Não está ligando',
-    'Outros',
-  ];
-  static const List<String> _motivosInsatisfacao = [
-    'Presente',
-    'Não gostou do produto',
-    'Desistiu da compra',
-    'Comprou errado',
     'Outros',
   ];
 
@@ -89,9 +82,6 @@ class _RealizarTrocaEtapa2ScreenState
     _descricao.dispose();
     super.dispose();
   }
-
-  List<String> get _motivos =>
-      _motivoTipo == 'Defeito' ? _motivosDefeito : _motivosInsatisfacao;
 
   String get _cause => _motivoTipo == 'Defeito' ? 'DEFEITO' : 'INSATISFACAO';
   String get _operationType =>
