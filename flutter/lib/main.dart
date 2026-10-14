@@ -20,10 +20,12 @@ import 'recebimento/screens/fotos_recebimento_screen.dart';
 import 'recebimento/screens/imagens_recebimento_screen.dart';
 import 'recebimento/screens/profile_screen.dart';
 import 'precificacao/core/session_manager.dart' as prec_session;
+import 'precificacao/network/api_client.dart' as prec_api;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await prec_session.SessionManager.getInstance();
+  final precSession = await prec_session.SessionManager.getInstance();
+  prec_api.ApiClient.instance.init(precSession);
   runApp(const MyApp());
 }
 
