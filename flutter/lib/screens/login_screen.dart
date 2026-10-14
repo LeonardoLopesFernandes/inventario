@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'Inventário',
+                      'Loja Mobile',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 26,
@@ -90,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Para ter acesso ao Inventário rotativo, vamos manter os '
+                      'Para ter acesso ao app, vamos manter os '
                       'fluxos de autenticação segura.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.white, fontSize: 13),
