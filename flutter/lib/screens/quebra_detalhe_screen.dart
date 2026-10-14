@@ -414,6 +414,7 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
         return InkWell(
           borderRadius: BorderRadius.circular(8),
           onTap: _somenteLeitura ? null : () => _editarItem(it),
+          onLongPress: _somenteLeitura ? null : () => _menuItem(it),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             decoration: BoxDecoration(
@@ -539,8 +540,91 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             ),
           ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(Constants.primaryRed),
+                side: const BorderSide(
+                    color: Color(Constants.primaryRed)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+              ),
+              onPressed: _descartarQuebra,
+              child: const Text('Descartar quebra',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _menuItem(BreakageItem it) async {
+    final acao = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              title: const Text('Excluir item'),
+              onTap: () => Navigator.pop(ctx, 'excluir'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (acao == 'excluir') await _removerItem(it);
+  }
+
+  Future<void> _removerItem(BreakageItem it) async {
+    try {
+      final lista = await _service!.removeBreakageItem(widget.breakageId, it.id);
+      if (!mounted) return;
+      setState(() {
+        _selecionados.remove(it.id);
+        _itens = lista ?? _itens.where((e) => e.id != it.id).toList();
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao excluir item'), backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> _descartarQuebra() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Descartar quebra'),
+        content: const Text(
+            'A quebra será removida por completo, com todos os itens. Deseja continuar?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Não')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sim')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _service!.deleteBreakage(widget.breakageId);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao descartar quebra'),
+          backgroundColor: Colors.red));
+    }
   }
 }
