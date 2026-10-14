@@ -369,7 +369,7 @@ class _EtiquetasScreenState extends State<EtiquetasScreen>
     setState(() => _isLoading = true);
     try {
       final bytes = await _api.reportFullChanges(_storeId, _currentDate, isPriceTag: true);
-      const channel = MethodChannel('minhaloja/pdf');
+      const channel = MethodChannel('com.ir/media');
       final ts = DateTime.now().millisecondsSinceEpoch;
       final fileName = 'relatorio_etiquetas_$ts.pdf';
       await channel.invokeMethod('saveToDownloadsAndOpen', {

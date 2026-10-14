@@ -296,7 +296,7 @@ class _PapeletasDiariasScreenState extends State<PapeletasDiariasScreen>
     try {
       // Igual ao Kotlin: o relatório é sempre do dia de hoje.
       final bytes = await _api.reportFullChanges(_storeId, _today, isPriceTag: false);
-      const channel = MethodChannel('minhaloja/pdf');
+      const channel = MethodChannel('com.ir/media');
       final ts = DateTime.now().millisecondsSinceEpoch;
       final fileName = 'relatorio_papeletas_$ts.pdf';
       await channel.invokeMethod('saveToDownloadsAndOpen', {

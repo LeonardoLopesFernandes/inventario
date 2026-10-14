@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 
 /// Bip curto via ToneGenerator nativo (canal `minhaloja/beep`).
 class Beep {
-  static const MethodChannel _ch = MethodChannel('minhaloja/beep');
+  static const MethodChannel _ch = MethodChannel('com.ir/beep');
 
   /// Leitura ok / item adicionado.
   static Future<void> success() async {
