@@ -9,8 +9,10 @@ import 'scanner_ean_screen.dart';
 
 class QuebraDetalheScreen extends StatefulWidget {
   final String breakageId;
+  final bool somenteLeituraInicial;
 
-  const QuebraDetalheScreen({super.key, required this.breakageId});
+  const QuebraDetalheScreen(
+      {super.key, required this.breakageId, this.somenteLeituraInicial = false});
 
   @override
   State<QuebraDetalheScreen> createState() => _QuebraDetalheScreenState();
@@ -26,10 +28,12 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
   bool _buscando = false;
   bool _porSap = false;
   bool _somenteLeitura = false;
+  bool _carregando = true;
 
   @override
   void initState() {
     super.initState();
+    _somenteLeitura = widget.somenteLeituraInicial;
     _init();
   }
 
@@ -56,6 +60,7 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
       _itens = itens;
       _reasons = reasons;
       _somenteLeitura = somenteLeitura;
+      _carregando = false;
     });
   }
 
@@ -238,25 +243,27 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
                 fontSize: 18,
                 fontWeight: FontWeight.w500)),
       ),
-      body: Column(
-        children: [
-          if (_somenteLeitura) ...[
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _avisoConsulta(),
+      body: _carregando
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                if (_somenteLeitura) ...[
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _avisoConsulta(),
+                  ),
+                  const SizedBox(height: 12),
+                ] else ...[
+                  Container(color: Colors.white, child: _seletorEanSap()),
+                  const SizedBox(height: 16),
+                  _campoBusca(),
+                ],
+                const SizedBox(height: 12),
+                Expanded(child: _corpo()),
+                if (!_somenteLeitura) _painelInferior(),
+              ],
             ),
-            const SizedBox(height: 12),
-          ] else ...[
-            Container(color: Colors.white, child: _seletorEanSap()),
-            const SizedBox(height: 16),
-            _campoBusca(),
-          ],
-          const SizedBox(height: 12),
-          Expanded(child: _corpo()),
-          if (!_somenteLeitura) _painelInferior(),
-        ],
-      ),
     );
   }
 

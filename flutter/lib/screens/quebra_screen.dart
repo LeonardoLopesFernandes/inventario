@@ -69,7 +69,8 @@ class _QuebraScreenState extends State<QuebraScreen> {
 
   Future<void> _abrirDetalhe(Breakage b) async {
     await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => QuebraDetalheScreen(breakageId: b.id),
+      builder: (_) => QuebraDetalheScreen(
+          breakageId: b.id, somenteLeituraInicial: b.processado),
     ));
     _carregar(reset: true);
   }
