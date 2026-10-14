@@ -221,11 +221,8 @@ class _RealizarTrocaItensScreenState extends State<RealizarTrocaItensScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('ã',
-                  style: TextStyle(
-                      color: Color(0xFFD32F2F),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16)),
+              Image.asset('assets/drawables/logo_mloja.png',
+                  width: 18, height: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
