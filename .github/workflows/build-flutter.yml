@@ -57,6 +57,7 @@ jobs:
             --build-number=$VERSION_CODE \
             --build-name="${GITHUB_REF_NAME#v}" \
             --dart-define=MICROSOFT_CLIENT_SECRET=$microsoftClientSecret \
+            --split-debug-info=build/symbols \
             --no-tree-shake-icons
 
       - name: Rename APK
