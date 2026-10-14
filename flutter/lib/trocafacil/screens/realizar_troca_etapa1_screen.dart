@@ -25,9 +25,9 @@ class _RealizarTrocaEtapa1ScreenState
   final _bairro = TextEditingController();
   final _numero = TextEditingController();
   final _complemento = TextEditingController();
+  final _cidade = TextEditingController();
+  final _uf = TextEditingController();
 
-  String _cidade = '';
-  String _uf = '';
   bool _buscandoCep = false;
   String? _erroCep;
 
@@ -51,6 +51,8 @@ class _RealizarTrocaEtapa1ScreenState
       c.dispose();
     }
     _cep.dispose();
+    _cidade.dispose();
+    _uf.dispose();
     super.dispose();
   }
 
@@ -79,8 +81,8 @@ class _RealizarTrocaEtapa1ScreenState
           setState(() {
             _rua.text = (j['logradouro'] ?? '').toString();
             _bairro.text = (j['bairro'] ?? '').toString();
-            _cidade = (j['localidade'] ?? '').toString();
-            _uf = (j['uf'] ?? '').toString();
+            _cidade.text = (j['localidade'] ?? '').toString();
+            _uf.text = (j['uf'] ?? '').toString();
           });
         }
       } else {
@@ -111,8 +113,8 @@ class _RealizarTrocaEtapa1ScreenState
       'bairro': _bairro.text.trim(),
       'numero': _numero.text.trim(),
       'complemento': _complemento.text.trim(),
-      'cidade': _cidade,
-      'uf': _uf,
+      'cidade': _cidade.text.trim(),
+      'uf': _uf.text.trim(),
     });
   }
 
@@ -221,12 +223,21 @@ class _RealizarTrocaEtapa1ScreenState
                     ),
                   ],
                 ),
-                if (_cidade.isNotEmpty || _uf.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text('$_cidade${_uf.isNotEmpty ? ' - $_uf' : ''}',
-                      style: const TextStyle(
-                          fontSize: 13, color: Colors.black54)),
-                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: _campo(_cidade, 'Cidade',
+                          readOnly: true),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 1,
+                      child: _campo(_uf, 'UF', readOnly: true),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -260,6 +271,7 @@ class _RealizarTrocaEtapa1ScreenState
     TextEditingController controller,
     String hintText, {
     TextInputType? keyboardType,
+    bool readOnly = false,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -270,6 +282,7 @@ class _RealizarTrocaEtapa1ScreenState
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        readOnly: readOnly,
         decoration: InputDecoration(
           hintText: hintText,
           hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 15),
