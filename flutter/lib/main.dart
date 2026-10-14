@@ -14,6 +14,7 @@ import 'screens/home_hub_screen.dart';
 import 'trocafacil/screens/troca_facil_menu_screen.dart';
 import 'trocafacil/screens/realizar_troca_etapa1_screen.dart';
 import 'trocafacil/screens/realizar_troca_etapa2_screen.dart';
+import 'trocafacil/screens/realizar_troca_itens_screen.dart';
 import 'trocafacil/screens/lista_operacoes_screen.dart';
 import 'trocafacil/screens/filtrar_operacoes_screen.dart';
 import 'trocafacil/screens/troca_login_webview.dart';
@@ -133,10 +134,14 @@ class MyApp extends StatelessWidget {
         '/pdf_viewer': (ctx) => const PdfViewerScreen(),
         '/troca_facil': (ctx) => const TrocaFacilMenuScreen(),
         '/troca_login': (ctx) => const TrocaLoginWebViewScreen(),
-        '/troca_etiqueta': (ctx) => const TrocaEtiquetaScreen(),
+        '/troca_etiqueta': (ctx) {
+          final args = ModalRoute.of(ctx)?.settings.arguments;
+          final token = args is Map ? args['token'] as String? : null;
+          return TrocaEtiquetaScreen(token: token);
+        },
         '/troca_realizar': (ctx) => const RealizarTrocaEtapa1Screen(),
         '/troca_etapa2': (ctx) => const RealizarTrocaEtapa2Screen(),
-        '/troca_itens': (ctx) => const _EmBreve('Itens da troca'),
+        '/troca_itens': (ctx) => const RealizarTrocaItensScreen(),
         '/troca_operacoes': (ctx) => const ListaOperacoesScreen(),
         '/troca_operacoes_filtro': (ctx) => const FiltrarOperacoesScreen(),
         '/home': (ctx) => const HomeHubScreen(),
