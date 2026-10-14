@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 /// Tela/widget de autenticação: ícone com efeito de pulso + brilho dinâmico.
 class AuthLoader extends StatefulWidget {
@@ -56,7 +55,7 @@ class _AuthLoaderState extends State<AuthLoader>
               builder: (context, child) => Transform.scale(
                 scale: _scale.value,
                 child: Container(
-                  padding: const EdgeInsets.all(28),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
@@ -71,10 +70,10 @@ class _AuthLoaderState extends State<AuthLoader>
                   child: child,
                 ),
               ),
-              child: SvgPicture.asset(
-                'assets/drawables/ic_inventario_branco.svg',
-                width: 56,
-                height: 56,
+              child: Image.asset(
+                'assets/drawables/loja.png',
+                width: 120,
+                height: 120,
               ),
             ),
             const SizedBox(height: 48),

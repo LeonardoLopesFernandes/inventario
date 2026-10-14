@@ -13,6 +13,11 @@ import 'screens/precificacao_menu_screen.dart';
 import 'screens/home_hub_screen.dart';
 import 'precificacao/screens/etiquetas/etiquetas_fragment.dart';
 import 'precificacao/screens/papeletas/papeletas_fragment.dart';
+import 'precificacao/screens/barcode/barcode_scanner_screen.dart';
+import 'precificacao/screens/etiquetas/gondola_editavel_screen.dart';
+import 'precificacao/screens/modelo/modelo_editavel_screen.dart';
+import 'precificacao/screens/pdf/pdf_viewer_screen.dart';
+import 'precificacao/models/models.dart' as prec_models;
 import 'recebimento/screens/home_screen.dart';
 import 'recebimento/screens/detalhes_viagem_screen.dart';
 import 'recebimento/screens/itens_screen.dart';
@@ -106,6 +111,19 @@ class MyApp extends StatelessWidget {
         '/profile': (ctx) => const ProfileScreen(),
         '/quebra': (ctx) => const QuebraScreen(),
         '/quebra_consulta': (ctx) => const QuebraScreen(apenasConsulta: true),
+        '/barcode': (ctx) => const BarcodeScannerScreen(),
+        '/gondola_editavel': (ctx) {
+          final args =
+              ModalRoute.of(ctx)?.settings.arguments as Map<String, dynamic>?;
+          return GondolaEditavelScreen(
+            items: (args?['items'] as List?)
+                    ?.cast<prec_models.PrintingData>() ??
+                [],
+            printerId: args?['printerId'] as String? ?? 'ZEBRA_1',
+          );
+        },
+        '/modelo_editavel': (ctx) => const ModeloEditavelScreen(),
+        '/pdf_viewer': (ctx) => const PdfViewerScreen(),
         '/home': (ctx) => const HomeHubScreen(),
       },
     );
