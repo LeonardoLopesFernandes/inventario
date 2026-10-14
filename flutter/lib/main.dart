@@ -15,6 +15,7 @@ import 'trocafacil/screens/troca_facil_menu_screen.dart';
 import 'trocafacil/screens/realizar_troca_etapa1_screen.dart';
 import 'trocafacil/screens/realizar_troca_etapa2_screen.dart';
 import 'trocafacil/screens/realizar_troca_itens_screen.dart';
+import 'trocafacil/screens/avaliacao_produto_screen.dart';
 import 'trocafacil/screens/lista_operacoes_screen.dart';
 import 'trocafacil/screens/filtrar_operacoes_screen.dart';
 import 'trocafacil/screens/troca_login_webview.dart';
@@ -142,6 +143,7 @@ class MyApp extends StatelessWidget {
         '/troca_realizar': (ctx) => const RealizarTrocaEtapa1Screen(),
         '/troca_etapa2': (ctx) => const RealizarTrocaEtapa2Screen(),
         '/troca_itens': (ctx) => const RealizarTrocaItensScreen(),
+        '/troca_avaliacao': (ctx) => const AvaliacaoProdutoScreen(),
         '/troca_operacoes': (ctx) => const ListaOperacoesScreen(),
         '/troca_operacoes_filtro': (ctx) => const FiltrarOperacoesScreen(),
         '/home': (ctx) => const HomeHubScreen(),
