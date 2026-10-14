@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:inventario/precificacao/core/constants.dart';
 import 'package:inventario/precificacao/core/session_manager.dart';
 import 'package:inventario/precificacao/core/lista_store.dart';
-import 'package:inventario/precificacao/core/theme.dart';
 import 'package:inventario/precificacao/models/models.dart';
 import 'package:inventario/precificacao/network/api_client.dart';
 import 'package:inventario/precificacao/network/api_service.dart';
@@ -13,18 +12,18 @@ import 'package:inventario/precificacao/utils/session_expired_handler.dart';
 import 'package:inventario/precificacao/utils/buscar_anim.dart';
 import 'package:inventario/precificacao/utils/price_tag_mapper.dart';
 import 'package:inventario/precificacao/screens/barcode/barcode_scanner_screen.dart';
-import 'package:inventario/precificacao/widgets/cards.dart';
+import 'package:inventario/precificacao/widgets/avulsa_cards.dart';
+import 'package:inventario/precificacao/widgets/compose_avulsa.dart';
 import 'package:inventario/precificacao/widgets/action_swipe_card.dart';
 import 'package:inventario/precificacao/services/lista_pdf_service.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 
-  String _formatToday() {
-    final d = DateTime.now();
-    final y = d.year.toString();
-    final m = d.month.toString().padLeft(2, '0');
-    final day = d.day.toString().padLeft(2, '0');
-    return '$y-$m-$day';
-  }
+String _formatToday() {
+  final d = DateTime.now();
+  final y = d.year.toString();
+  final m = d.month.toString().padLeft(2, '0');
+  final day = d.day.toString().padLeft(2, '0');
+  return '$y-$m-$day';
+}
 
 class EtiquetasFragment extends StatefulWidget {
   const EtiquetasFragment({super.key});
@@ -43,28 +42,28 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
   List<PriceTag> _tags = [];
 
   bool _loading = false;
-  bool _fabNoLugar = false;
 
   final TextEditingController _eanController = TextEditingController();
   final FocusNode _eanFocus = FocusNode();
   String _buscaTipo = 'EAN';
-   String _eanHint = 'Digite um EAN';
+  String _eanHint = 'Digite o EAN';
   TextInputType _eanKeyboardType = TextInputType.number;
-   String _printer = 'Zebra 1';
-   String _modo = 'Normal';
-   bool _imprimindo = false;
-   bool _limpando = false;
-   String? _deletingId;
+  String _printer = 'Zebra 1';
+  String _modo = 'Normal';
+  bool _imprimindo = false;
+  bool _limpando = false;
+  bool _gerandoPdf = false;
+  String? _deletingId;
   String _colagem = '';
 
   String get _baseHint {
     switch (_buscaTipo) {
       case 'EAN':
-        return 'Digite um EAN';
+        return 'Digite o EAN';
       case 'SAP':
-        return 'Digite um SAP';
+        return 'Digite o SAP';
       default:
-        return 'Descrição do item';
+        return 'Buscar Por Descrição';
     }
   }
 
@@ -75,7 +74,6 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
     _today = _formatToday();
     _loadSaved();
     _carregarColagem();
-    // Ao focar o campo, limpa o código escaneado para digitação manual.
     _eanFocus.addListener(() {
       if (_eanFocus.hasFocus && _eanController.text.isNotEmpty) {
         _eanController.clear();
@@ -108,19 +106,14 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
   void _deleteTag(PriceTag tag) {
     if (_deletingId != null) return;
     setState(() => _deletingId = tag.id);
-    Future.delayed(const Duration(milliseconds: 350), () {
-      if (!mounted) return;
-      setState(() {
-        _tags.removeWhere((e) => e.id == tag.id);
-        _deletingId = null;
-      });
-      ListaStore.instance.removeEtiqueta(tag);
+    setState(() {
+      _tags.removeWhere((e) => e.id == tag.id);
+      _deletingId = null;
     });
+    ListaStore.instance.removeEtiqueta(tag);
   }
 
   Future<void> _addByScan() async {
-    // Scanner contínuo: adiciona os itens direto na lista, com bip; ao voltar,
-    // recarrega a lista salva (sem sair da câmera a cada leitura).
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -139,7 +132,6 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
   Future<void> _salvarColagem(String code) async {
     setState(() => _colagem = code);
     await ListaStore.instance.setColagem(code);
-    // Copia para a área de transferência, como no app Kotlin.
     try {
       await Clipboard.setData(ClipboardData(text: code));
     } catch (e) {
@@ -157,7 +149,7 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
   Widget _buildColagem() {
     if (_colagem.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: Material(
@@ -167,21 +159,18 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
             onTap: _usarColagem,
             borderRadius: BorderRadius.circular(6),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.content_paste,
-                      size: 18, color: Color(0xFFD32F2F)),
-                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Área de colagem: $_colagem',
                       style: const TextStyle(
-                        color: Color(0xFFD32F2F),
+                        color: Color(0xFFB71C1C),
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -191,7 +180,7 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
                       setState(() => _colagem = '');
                     },
                     child: const Icon(Icons.close,
-                        size: 16, color: Color(0xFFD32F2F)),
+                        size: 16, color: Color(0xFFB71C1C)),
                   ),
                 ],
               ),
@@ -205,13 +194,9 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
   Future<void> _fetchAndAdd(String code) async {
     final c = code.trim();
     if (c.isEmpty) {
-      ToastUtils.show(context, 'Digite um código');
+      ToastUtils.show(context, _baseHint);
       return;
     }
-    setState(() {
-      _loading = true;
-      _eanHint = 'BUSCANDO...';
-    });
     startBuscarAnim();
     try {
       final resp = await api.getSingleLabelByEan(
@@ -224,10 +209,6 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
       if (!mounted) return;
       if (resp.items.isEmpty) {
         ToastUtils.showInfo(context, 'Nenhuma etiqueta encontrada');
-        setState(() {
-          _loading = false;
-          _eanHint = _baseHint;
-        });
         return;
       }
       int added = 0;
@@ -245,7 +226,7 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
       setState(() {});
       await _persist();
       ToastUtils.showSuccess(
-          context, '$added adicionado(s) | $incremented incrementado(s)');
+          context, _mensagemBusca(added, incremented));
     } on ApiException catch (e) {
       if (e.statusCode == 401) {
         SessionExpiredHandler.handleSessionExpired(context);
@@ -256,14 +237,15 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
       LogHelper.e('EtiquetasFragment: erro ao adicionar', e);
       ToastUtils.showError(context, 'Erro ao buscar etiqueta');
     } finally {
-      if (mounted) {
-        setState(() {
-          _loading = false;
-          _eanHint = _baseHint;
-        });
-      }
       stopBuscarAnim();
     }
+  }
+
+  String _mensagemBusca(int added, int incremented) {
+    final parts = <String>[];
+    if (added > 0) parts.add('$added adicionado(s)');
+    if (incremented > 0) parts.add('$incremented incrementado(s)');
+    return parts.join(' | ');
   }
 
   Future<void> _sendToPrinter() async {
@@ -326,8 +308,46 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
   }
 
   Future<void> _imprimirItem(PriceTag tag) async {
-    setState(() => tag.checkbox = true);
-    await _sendToPrinter();
+    // Imprime/remove apenas o item tocado (fiel ao Compose).
+    final pd = tag.printingData;
+    if (pd == null) {
+      ToastUtils.show(context, 'Dados de impressão não disponíveis');
+      return;
+    }
+    final template = pd.takeAndWin != null
+        ? Constants.signTemplateModelo
+        : Constants.templateNormalizado(pd.template);
+    final printingDataList = <PrintingData>[];
+    for (int i = 0; i < tag.quantity; i++) {
+      printingDataList.add(pd.copyWith(quantity: 1, template: template));
+    }
+    final printerId = _printer == 'Zebra 1'
+        ? Constants.printerZebra1
+        : Constants.printerZebra2;
+    setState(() => _loading = true);
+    try {
+      await api.sendPriceTagsToPrinter(
+        _storeId,
+        printerId,
+        Constants.tagGondola,
+        SendPriceTagsRequest(products: printingDataList),
+      );
+      if (!mounted) return;
+      setState(() => _tags.removeWhere((e) => e.id == tag.id));
+      await _persist();
+      ToastUtils.showSuccess(context, 'Enviado para impressão');
+    } on ApiException catch (e) {
+      if (e.statusCode == 401) {
+        SessionExpiredHandler.handleSessionExpired(context);
+        return;
+      }
+      ToastUtils.showError(context, e.message);
+    } catch (e) {
+      LogHelper.e('EtiquetasFragment: erro ao enviar item', e);
+      ToastUtils.showError(context, 'Erro ao enviar para impressora');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _abrirEdicao(List<PriceTag> selected) async {
@@ -374,6 +394,7 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
         title: const Text('Limpar Lista'),
         content: const Text('Tem certeza que deseja remover todos os itens?'),
         actions: [
@@ -394,317 +415,6 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
     }
   }
 
-
-
-   Widget _buildDropdownItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
-    const primaryRed = Color(0xFFD32F2F);
-    const labelGrey = Color(0xFF8C9BA5);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      child: Row(
-        children: [
-          Icon(icon, color: primaryRed, size: 18),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: labelGrey,
-                    letterSpacing: 0.3,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: value,
-                    isExpanded: true,
-                    isDense: true,
-                    icon: const Icon(Icons.keyboard_arrow_down, color: primaryRed, size: 16),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E293B),
-                    ),
-                    onChanged: onChanged,
-                    items: items.map((String item) {
-                      return DropdownMenuItem<String>(
-                        value: item,
-                        child: Text(item, overflow: TextOverflow.ellipsis),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterBar() {
-    const primaryRed = Color(0xFFD32F2F);
-    const borderGrey = Color(0xFFE1E5EB);
-
-
-    return Column(
-       children: [
-          // 1. FILTRO UNIFICADO (spinners + busca)
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: borderGrey, width: 1.5),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x08000000),
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    // Spinners
-                    IntrinsicHeight(
-                      child: Row(
-                        children: [
-                          // Spinner 1: Impressora
-                          Expanded(
-                            child: _buildDropdownItem(
-                              icon: Icons.print,
-                              label: 'IMPRESSORA',
-                              value: _printer,
-                              items: ['Zebra 1', 'Zebra 2'],
-                              onChanged: (val) => setState(() => _printer = val!),
-                            ),
-                          ),
-                          const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFF0F2F5)),
-                          // Spinner 2: Tipo
-                          Expanded(
-                            child: _buildDropdownItem(
-                              icon: Icons.qr_code,
-                              label: 'TIPO',
-                              value: _buscaTipo,
-                              items: ['EAN', 'SAP', 'Descrição'],
-                              onChanged: (val) => setState(() {
-                                _buscaTipo = val!;
-                                _eanHint = val == 'EAN'
-                                    ? 'Digite um EAN'
-                                    : val == 'SAP'
-                                        ? 'Digite um SAP'
-                                        : 'Descrição do item';
-                                _eanKeyboardType = val == 'Descrição'
-                                    ? TextInputType.text
-                                    : TextInputType.number;
-                              }),
-                            ),
-                          ),
-                          const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFF0F2F5)),
-                          // Spinner 3: Modo
-                          Expanded(
-                            child: _buildDropdownItem(
-                              icon: Icons.tune,
-                              label: 'MODO',
-                              value: _modo,
-                              items: ['Normal', 'Edição'],
-                              onChanged: (val) => setState(() => _modo = val!),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Linha divisora cinza
-                    Container(height: 1, color: Color(0xFFE1E5EB)),
-                    // Busca
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                      child: Row(
-                        children: [
-
-                        Expanded(
-                          child: TextField(
-                            controller: _eanController,
-                            focusNode: _eanFocus,
-                            keyboardType: _eanKeyboardType,
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              isDense: true,
-                            hintText: _eanHint,
-                              hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.normal),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          height: 38,
-                           child: ElevatedButton.icon(
-                             onPressed: buscando ? null : () => _fetchAndAdd(_eanController.text),
-                             icon: const Icon(Icons.search, size: 18, color: Colors.white),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryRed,
-                              disabledBackgroundColor: const Color(0xFFE57373),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                            ),
-                            label: buscando
-                                ? Text(buscandoLabel,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  )
-                                : const Text(
-                                    'BUSCAR',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 2),
-
-
-         // 3. BOTÕES INFERIORES (só aparece quando há etiquetas)
-         if (_tags.isNotEmpty)
-           Padding(
-             padding: const EdgeInsets.symmetric(horizontal: 8),
-             child: ConstrainedBox(
-               constraints: const BoxConstraints(maxWidth: 480),
-               child: Row(
-                 children: [
-                   Expanded(
-                     child: OutlinedButton(
-                       onPressed: _limpando ? null : _limparLista,
-                       style: OutlinedButton.styleFrom(
-                         side: const BorderSide(color: primaryRed, width: 1.5),
-                         shape: RoundedRectangleBorder(
-                           borderRadius: BorderRadius.circular(12),
-                         ),
-                         padding: const EdgeInsets.symmetric(vertical: 14),
-                       ),
-                       child: _limpando
-                           ? const SizedBox(
-                               width: 16,
-                               height: 16,
-                               child: CircularProgressIndicator(
-                                 strokeWidth: 2,
-                                 valueColor: AlwaysStoppedAnimation<Color>(primaryRed),
-                               ),
-                             )
-                           : const Text(
-                               'LIMPAR LISTA',
-                               style: TextStyle(
-                                 color: primaryRed,
-                                 fontWeight: FontWeight.bold,
-                                 fontSize: 12,
-                               ),
-                             ),
-                     ),
-                   ),
-                   const SizedBox(width: 12),
-                   Expanded(
-                     child: ElevatedButton(
-                       onPressed: _imprimindo ? null : _imprimirTodas,
-                       style: ElevatedButton.styleFrom(
-                         backgroundColor: primaryRed,
-                         shape: RoundedRectangleBorder(
-                           borderRadius: BorderRadius.circular(12),
-                         ),
-                         padding: const EdgeInsets.symmetric(vertical: 14),
-                         elevation: 0,
-                       ),
-                       child: _imprimindo
-                           ? const SizedBox(
-                               width: 16,
-                               height: 16,
-                               child: CircularProgressIndicator(
-                                 strokeWidth: 2,
-                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                               ),
-                             )
-                           : const Text(
-                               'IMPRIMIR TODAS',
-                               style: TextStyle(
-                                 color: Colors.white,
-                                 fontWeight: FontWeight.bold,
-                                 fontSize: 12,
-                               ),
-                             ),
-                     ),
-                   ),
-                 ],
-               ),
-             ),
-           ),
-if (_tags.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 480),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${_tags.length} ${_tags.length == 1 ? 'item' : 'itens'} na lista',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFFD32F2F),
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: _gerarPdfEtiquetas,
-                      tooltip: 'Gerar PDF da lista',
-                      icon: const Icon(Icons.picture_as_pdf,
-                          color: Color(0xFFD32F2F), size: 26),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      );
-    }
-
-  bool _gerandoPdf = false;
-
   Future<void> _gerarPdfEtiquetas() async {
     if (_gerandoPdf || _tags.isEmpty) return;
     setState(() => _gerandoPdf = true);
@@ -718,97 +428,211 @@ if (_tags.isNotEmpty)
     }
   }
 
-  Widget _emptyState() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: const BoxDecoration(
-              color: Color(0x1A000000),
-              shape: BoxShape.circle,
+  Widget _buildFilterBar() {
+    const primaryRed = Color(0xFFD32F2F);
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Card(
+              elevation: 1,
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: AvulsaSpinnerDropdown(
+                        label: 'IMPRESSORA',
+                        icon: Icons.print,
+                        value: _printer,
+                        options: const ['Zebra 1', 'Zebra 2'],
+                        onChanged: (v) {
+                          if (v != null) setState(() => _printer = v);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: AvulsaSpinnerDropdown(
+                        label: 'TIPO',
+                        icon: Icons.qr_code,
+                        value: _buscaTipo,
+                        options: const ['EAN', 'SAP', 'Descrição'],
+                        onChanged: (v) {
+                          if (v == null) return;
+                          setState(() {
+                            _buscaTipo = v;
+                            _eanHint = _baseHint;
+                            _eanKeyboardType = v == 'Descrição'
+                                ? TextInputType.text
+                                : TextInputType.number;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: AvulsaSpinnerDropdown(
+                        label: 'MODO',
+                        icon: Icons.tune,
+                        value: _modo,
+                        options: const ['Normal', 'Edição'],
+                        onChanged: (v) {
+                          if (v != null) setState(() => _modo = v);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            padding: const EdgeInsets.all(20),
-            child: Image.asset('assets/icons/ic_etiqueta.png',
-                color: const Color(0xFFA0A0A0)),
           ),
-          const SizedBox(height: 20),
-          const Text(
-            '0 item(a) na lista\n\nEscaneie ou digite\npara adicionar à lista',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF999999), fontSize: 14),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: AvulsaSearchField(
+              controller: _eanController,
+              focusNode: _eanFocus,
+              placeholder: _eanHint,
+              numerico: _buscaTipo == 'EAN' || _buscaTipo == 'SAP',
+              buscando: buscando,
+              onBuscar: () => _fetchAndAdd(_eanController.text),
+            ),
           ),
-        ],
+        ),
+        if (_tags.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _limpando ? null : _limparLista,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: primaryRed,
+                        side: const BorderSide(color: primaryRed),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('LIMPAR LISTA',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _imprimindo ? null : _imprimirTodas,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryRed,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                          _imprimindo ? 'IMPRIMINDO...' : 'IMPRIMIR TODAS',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (_tags.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _tags.length == 1
+                          ? '1 item na lista'
+                          : '${_tags.length} itens na lista',
+                      style: const TextStyle(
+                          color: primaryRed,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _gerarPdfEtiquetas,
+                    tooltip: 'Gerar PDF da lista',
+                    icon:
+                        const Icon(Icons.picture_as_pdf, color: primaryRed),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _emptyState() {
+    return const Center(
+      child: Text(
+        '0 item(a) na lista\n\nEscaneie ou digite\npara adicionar à lista',
+        textAlign: TextAlign.center,
+        style: TextStyle(color: Color(0xFF999999), fontSize: 14),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return Column(
       children: [
-        Column(
-          children: [
-            _buildFilterBar(),
-            _buildColagem(),
-            Expanded(
-              child: _tags.isEmpty
-                  ? _emptyState()
-                      : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(8, 2, 8, 8),
-                          itemCount: _tags.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 0),
-                            itemBuilder: (_, i) {
-                              final tag = _tags[i];
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 4),
-                                child: SwipeToTrashItem(
-                                  key: ValueKey(tag.id),
-                                  onDismissed: () => _deleteTag(tag),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: EtiquetaCard(
-                                      tag: tag,
-                                      onImprimir: (q) {
-                                        tag.quantity = q;
-                                        _imprimirItem(tag);
-                                      },
-                                      onRemover: () => _deleteTag(tag),
-                                      onChangedQuantity: (q) {
-                                        tag.quantity = q;
-                                        _persist();
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                        ),
-            ),
-          ],
-        ),
-        Positioned(
-          right: 24,
-          bottom: 24,
-          child: AnimatedSlide(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut,
-            // Igual ao MLoja: começa um pouco pro lado; 1º clique volta à
-            // posição original, 2º clique abre o scanner.
-            offset: _fabNoLugar ? Offset.zero : const Offset(0.6, 0),
-            child: FloatingActionButton(
-              backgroundColor: const Color(0xFFD32F2F),
-              onPressed: () {
-                if (!_fabNoLugar) {
-                  setState(() => _fabNoLugar = true);
-                  return;
-                }
-                _addByScan();
-              },
-              child: const Icon(Icons.qr_code_scanner, color: Colors.white),
-            ),
+        _buildFilterBar(),
+        _buildColagem(),
+        Expanded(
+          child: Stack(
+            children: [
+              if (_tags.isEmpty)
+                _emptyState()
+              else
+                ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 80),
+                  itemCount: _tags.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 6),
+                  itemBuilder: (_, i) {
+                    final tag = _tags[i];
+                    return SwipeToTrashItem(
+                      key: ValueKey(tag.id),
+                      onDismissed: () => _deleteTag(tag),
+                      child: AvulsaEtiquetaCard(
+                        tag: tag,
+                        onImprimir: (q) {
+                          tag.quantity = q;
+                          _imprimirItem(tag);
+                        },
+                        onChangedQuantity: (q) {
+                          tag.quantity = q;
+                          _persist();
+                        },
+                      ),
+                    );
+                  },
+                ),
+              Positioned(
+                right: 8,
+                bottom: 8,
+                child: AvulsaFabScanner(onAbrir: _addByScan),
+              ),
+            ],
           ),
         ),
       ],
