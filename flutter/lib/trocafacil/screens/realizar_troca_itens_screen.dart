@@ -137,6 +137,12 @@ class _RealizarTrocaItensScreenState extends State<RealizarTrocaItensScreen> {
           '${hoje.day.toString().padLeft(2, '0')}';
 
       final produto = _produto;
+      final rua = (_cliente['rua'] ?? '').toString();
+      final numero = (_cliente['numero'] ?? '').toString();
+      final complemento = (_cliente['complemento'] ?? '').toString();
+      final endereco = [rua, numero, complemento]
+          .where((e) => e.trim().isNotEmpty)
+          .join(', ');
       final body = {
         'products': [
           {
@@ -171,10 +177,10 @@ class _RealizarTrocaItensScreenState extends State<RealizarTrocaItensScreen> {
           'costumerDocument': _cliente['cpfCnpj'] ?? '',
           'costumerName': _cliente['nome'] ?? '',
           'costumerPhone': _cliente['telefone'] ?? '',
-          'neighborhood': '',
-          'uf': '',
-          'address': _cliente['endereco'] ?? '',
-          'city': '',
+          'neighborhood': _cliente['bairro'] ?? '',
+          'uf': _cliente['uf'] ?? '',
+          'address': endereco,
+          'city': _cliente['cidade'] ?? '',
           'email': '',
         },
         'couponData': {
