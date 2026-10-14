@@ -181,11 +181,10 @@ class ExcelDownloader {
   static Future<pw.ThemeData?> _loadPdfTheme() async {
     if (_pdfTheme != null) return _pdfTheme;
     try {
-      final base =
-          pw.Font.ttf(await rootBundle.load('assets/fonts/helvetica.ttf'));
-      final bold = pw.Font.ttf(
-          await rootBundle.load('assets/fonts/helvetica_bold.ttf'));
-      return _pdfTheme = pw.ThemeData.withFont(base: base, bold: bold);
+      return _pdfTheme = pw.ThemeData.withFont(
+        base: pw.Font.helvetica(),
+        bold: pw.Font.helveticaBold(),
+      );
     } catch (_) {
       return null;
     }
