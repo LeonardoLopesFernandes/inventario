@@ -60,11 +60,19 @@ class HomeHubScreen extends StatefulWidget {
 
 class _HomeHubScreenState extends State<HomeHubScreen> {
   final Set<String> _favoritos = {};
+  final TextEditingController _buscaController = TextEditingController();
+  bool _buscando = false;
 
   @override
   void initState() {
     super.initState();
     _carregarFavoritos();
+  }
+
+  @override
+  void dispose() {
+    _buscaController.dispose();
+    super.dispose();
   }
 
   Future<void> _carregarFavoritos() async {
@@ -90,8 +98,24 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
     await prefs.setStringList(_kFavoritosKey, _favoritos.toList());
   }
 
+  void _toggleBusca() {
+    setState(() {
+      _buscando = !_buscando;
+      if (!_buscando) _buscaController.clear();
+    });
+  }
+
+  List<_Hub> get _filtrados {
+    final q = _buscaController.text.trim().toLowerCase();
+    if (q.isEmpty) return _hubs;
+    return _hubs
+        .where((h) => h.title.toLowerCase().contains(q))
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final filtrados = _filtrados;
     return Scaffold(
       backgroundColor: const Color(0xFFF1F1F1),
       body: Column(
@@ -102,7 +126,7 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
               top: MediaQuery.of(context).padding.top + 8,
               left: 16,
               right: 16,
-              bottom: 24,
+              bottom: 20,
             ),
             decoration: const BoxDecoration(
               color: Color(0xFFD32F2F),
@@ -111,7 +135,7 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Image.asset(
@@ -120,40 +144,82 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
                       height: 40,
                     ),
                     const SizedBox(width: 12),
-                    const Text(
-                      'Minha Loja',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold),
+                    const Expanded(
+                      child: Text(
+                        'Minha Loja',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _toggleBusca,
+                      icon: Icon(_buscando ? Icons.close : Icons.search,
+                          color: Colors.white),
+                      tooltip: 'Pesquisar',
                     ),
                   ],
                 ),
+                if (_buscando) ...[
+                  const SizedBox(height: 4),
+                  TextField(
+                    controller: _buscaController,
+                    autofocus: true,
+                    onChanged: (_) => setState(() {}),
+                    style: const TextStyle(color: Colors.white),
+                    cursorColor: Colors.white,
+                    textInputAction: TextInputAction.search,
+                    decoration: InputDecoration(
+                      hintText: 'Pesquisar módulo...',
+                      hintStyle: const TextStyle(color: Colors.white70),
+                      prefixIcon:
+                          const Icon(Icons.search, color: Colors.white70),
+                      filled: true,
+                      fillColor: Colors.white24,
+                      isDense: true,
+                      contentPadding:
+                          const EdgeInsets.symmetric(vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
           const SizedBox(height: 16),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 1.25,
-                children: [
-                  for (final hub in _hubs)
-                    _MenuCard(
-                      iconAsset: hub.iconAsset,
-                      fallbackIcon: hub.fallbackIcon,
-                      title: hub.title,
-                      favorito: _favoritos.contains(hub.id),
-                      onFavoritar: () => _toggleFavorito(hub.id),
-                      onTap: () => Navigator.of(context).pushNamed(hub.rota),
+            child: filtrados.isEmpty
+                ? const Center(
+                    child: Text(
+                      'Nenhum módulo encontrado',
+                      style: TextStyle(color: Colors.black54, fontSize: 15),
                     ),
-                ],
-              ),
-            ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: GridView.count(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 1.25,
+                      children: [
+                        for (final hub in filtrados)
+                          _MenuCard(
+                            iconAsset: hub.iconAsset,
+                            fallbackIcon: hub.fallbackIcon,
+                            title: hub.title,
+                            favorito: _favoritos.contains(hub.id),
+                            onFavoritar: () => _toggleFavorito(hub.id),
+                            onTap: () =>
+                                Navigator.of(context).pushNamed(hub.rota),
+                          ),
+                      ],
+                    ),
+                  ),
           ),
         ],
       ),
