@@ -25,7 +25,7 @@ class PrecificacaoMenuScreen extends StatelessWidget {
         children: [
           _item(
             context,
-            'Etiquetas',
+            'Etiquetas Avulsas',
             Icons.sell_outlined,
             () => Navigator.of(context).pushNamed('/precificacao_etiquetas'),
           ),
