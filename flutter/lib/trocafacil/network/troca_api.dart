@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:inventario/network/session_manager.dart';
 import '../models/avaliacao.dart';
+import '../models/cupom.dart';
 import 'troca_session.dart';
 
 /// Cliente HTTP da Troca Fácil (bff-front).
@@ -99,6 +100,102 @@ class TrocaApi {
       throw TrocaApiException(resp.statusCode, 'Erro ${resp.statusCode}');
     }
     return json.decode(resp.body) as Map<String, dynamic>;
+  }
+
+  /// Consulta os dados do cupom (base-cupom/get_cupom).
+  /// [storeId] sem prefixo "L" (ex.: 291).
+  Future<Cupom> getCupom({
+    required String storeId,
+    required String pdv,
+    required String data,
+    required String cupom,
+    String origin = 'FISICO',
+    String cause = 'INSATISFACAO',
+  }) async {
+    final uri = Uri.parse('$baseUrl/base-cupom/get_cupom').replace(
+      queryParameters: {
+        'storeId': storeId,
+        'pdv': pdv,
+        'data': data,
+        'cupom': cupom,
+        'origin': origin,
+        'cause': cause,
+      },
+    );
+    final resp = await http.get(uri, headers: await _headers());
+    if (resp.statusCode == 401) {
+      throw TrocaApiException(401, 'Sessão expirada');
+    }
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      throw TrocaApiException(resp.statusCode, 'Cupom não encontrado');
+    }
+    final body = resp.body.isEmpty
+        ? <String, dynamic>{}
+        : json.decode(resp.body) as Map<String, dynamic>;
+    return Cupom.fromJson(body);
+  }
+
+  /// Perguntas de avaliação (bff-frontend/questions).
+  /// [infosProduct] no formato "D034,L34010345;" (departamento,linha;) por item.
+  Future<List<Map<String, dynamic>>> getQuestions({
+    String operation = 'TROCA',
+    String cause = 'INSATISFACAO',
+    String origin = 'FISICO',
+    required String infosProduct,
+  }) async {
+    final uri = Uri.parse('$baseUrl/questions').replace(queryParameters: {
+      'operation': operation,
+      'cause': cause,
+      'origin': origin,
+      'infosProduct': infosProduct,
+    });
+    final resp = await http.get(uri, headers: await _headers());
+    if (resp.statusCode == 401) {
+      throw TrocaApiException(401, 'Sessão expirada');
+    }
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      throw TrocaApiException(resp.statusCode, 'Erro ${resp.statusCode}');
+    }
+    final raw = resp.body.isEmpty ? const [] : json.decode(resp.body);
+    if (raw is List) {
+      return raw
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    }
+    return const [];
+  }
+
+  /// Verifica se o cliente está bloqueado (bff-client/block-client/{cnpj}).
+  /// [cnpj] só dígitos (ex.: 90259904104).
+  Future<Map<String, dynamic>> getBlockClient(String cnpj) async {
+    final uri = Uri.parse('$baseUrl/bff-client/block-client/$cnpj');
+    final resp = await http.get(uri, headers: await _headers());
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      throw TrocaApiException(resp.statusCode, 'Erro ${resp.statusCode}');
+    }
+    if (resp.body.isEmpty) return const {};
+    final body = json.decode(resp.body);
+    return body is Map ? Map<String, dynamic>.from(body) : const {};
+  }
+
+  /// Finaliza a troca (bff-trade/finish-trade). Retorna o objeto da operação.
+  Future<Map<String, dynamic>> finishTrade(Map<String, dynamic> body) async {
+    final uri = Uri.parse('$baseUrl/bff-trade/finish-trade');
+    final headers = await _headers();
+    headers['content-type'] = 'application/json';
+    final resp = await http.post(uri,
+        headers: headers, body: json.encode(body));
+    if (resp.statusCode == 401) {
+      throw TrocaApiException(401, 'Sessão expirada');
+    }
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      throw TrocaApiException(
+          resp.statusCode, resp.body.isNotEmpty ? resp.body : 'Erro ${resp.statusCode}');
+    }
+    if (resp.body.isEmpty) return const {};
+    final decoded = json.decode(resp.body);
+    return decoded is Map ? Map<String, dynamic>.from(decoded) : const {};
   }
 
   /// Formata data ISO/AAAA-MM-DDTHH:mm:ss em dd/MM/yyyy.
