@@ -149,6 +149,11 @@ class _QuebraScreenState extends State<QuebraScreen> {
 
   List<Breakage> get _filtrados {
     var lista = _items;
+    // Na tela "Cadastrar e processar" mostra só as pendentes/em andamento;
+    // as processadas aparecem apenas em "Consultar quebras".
+    if (!widget.apenasConsulta) {
+      lista = lista.where((b) => !b.processado).toList();
+    }
     if (_chip == 'Aberta') {
       lista = lista
           .where((b) =>
