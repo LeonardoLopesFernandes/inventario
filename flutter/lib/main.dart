@@ -16,6 +16,7 @@ import 'trocafacil/screens/realizar_troca_etapa1_screen.dart';
 import 'trocafacil/screens/lista_operacoes_screen.dart';
 import 'trocafacil/screens/filtrar_operacoes_screen.dart';
 import 'trocafacil/screens/troca_login_webview.dart';
+import 'trocafacil/screens/troca_etiqueta_screen.dart';
 import 'precificacao/screens/etiquetas/etiquetas_fragment.dart';
 import 'precificacao/screens/papeletas/papeletas_fragment.dart';
 import 'precificacao/screens/barcode/barcode_scanner_screen.dart';
@@ -131,6 +132,7 @@ class MyApp extends StatelessWidget {
         '/pdf_viewer': (ctx) => const PdfViewerScreen(),
         '/troca_facil': (ctx) => const TrocaFacilMenuScreen(),
         '/troca_login': (ctx) => const TrocaLoginWebViewScreen(),
+        '/troca_etiqueta': (ctx) => const TrocaEtiquetaScreen(),
         '/troca_realizar': (ctx) => const RealizarTrocaEtapa1Screen(),
         '/troca_etapa2': (ctx) => const _EmBreve('Realizar troca (2/2)'),
         '/troca_operacoes': (ctx) => const ListaOperacoesScreen(),
