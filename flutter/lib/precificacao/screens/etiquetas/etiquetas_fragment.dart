@@ -437,6 +437,7 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: Card(
+              margin: EdgeInsets.zero,
               elevation: 1,
               color: Colors.white,
               shape: RoundedRectangleBorder(

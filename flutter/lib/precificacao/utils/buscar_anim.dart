@@ -22,9 +22,13 @@ mixin BuscarAnimMixin<T extends StatefulWidget> on State<T> {
   }
 
   void stopBuscarAnim() {
-    buscando = false;
     _buscarTimer?.cancel();
     _buscarTimer = null;
+    if (mounted) {
+      setState(() => buscando = false);
+    } else {
+      buscando = false;
+    }
   }
 
   String get buscandoLabel => 'BUSCANDO${'.' * _buscarDot}';

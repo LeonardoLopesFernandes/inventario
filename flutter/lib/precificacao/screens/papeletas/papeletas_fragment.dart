@@ -626,6 +626,7 @@ class _PapeletasFragmentState extends State<PapeletasFragment>
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: Card(
+              margin: EdgeInsets.zero,
               elevation: 1,
               color: Colors.white,
               shape: RoundedRectangleBorder(
