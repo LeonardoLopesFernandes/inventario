@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:barcode/barcode.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../models/models.dart';
@@ -41,42 +42,7 @@ class ListaPdfService {
             ),
           ),
           pw.SizedBox(height: 12),
-          pw.TableHelper.fromTextArray(
-            headers: const ['Quantidade', 'EAN', 'SAP', 'Descrição'],
-            data: [
-              for (final t in itens)
-                [
-                  t.quantity.toString(),
-                  t.ean,
-                  t.sap,
-                  t.description,
-                ],
-            ],
-            headerStyle: pw.TextStyle(
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.white,
-            ),
-            headerDecoration: const pw.BoxDecoration(
-              color: PdfColors.red700,
-            ),
-            cellStyle: const pw.TextStyle(fontSize: 10),
-            cellAlignments: {
-              0: pw.Alignment.centerLeft,
-              1: pw.Alignment.centerLeft,
-              2: pw.Alignment.centerLeft,
-              3: pw.Alignment.centerLeft,
-            },
-            columnWidths: {
-              0: const pw.FixedColumnWidth(100),
-              1: const pw.FixedColumnWidth(120),
-              2: const pw.FixedColumnWidth(100),
-              3: const pw.FlexColumnWidth(),
-            },
-            border: pw.TableBorder.all(
-              color: PdfColors.grey300,
-              width: 0.5,
-            ),
-          ),
+          _tabelaEtiquetas(itens),
           pw.SizedBox(height: 16),
           pw.Text(
             'Total de etiquetas: ${itens.fold<int>(0, (s, t) => s + t.quantity)}',
@@ -188,6 +154,63 @@ class ListaPdfService {
     await Share.shareXFiles(
       [XFile(arquivo.path, mimeType: 'application/pdf')],
       text: 'Relatório de Papeletas',
+    );
+  }
+
+  /// Tabela do relatório de etiquetas: QTD, EAN, DESCRIÇÃO, CÓDIGO DE BARRAS
+  /// (Code 128 gerado a partir do EAN).
+  static pw.Widget _tabelaEtiquetas(List<PriceTag> itens) {
+    final headerStyle = pw.TextStyle(
+      fontWeight: pw.FontWeight.bold,
+      color: PdfColors.white,
+      fontSize: 10,
+    );
+    const cellStyle = pw.TextStyle(fontSize: 9);
+
+    pw.Widget cell(pw.Widget child, {pw.Alignment? align}) => pw.Padding(
+          padding: const pw.EdgeInsets.all(4),
+          child: pw.Align(
+            alignment: align ?? pw.Alignment.centerLeft,
+            child: child,
+          ),
+        );
+
+    return pw.Table(
+      border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+      columnWidths: {
+        0: const pw.FixedColumnWidth(40),
+        1: const pw.FixedColumnWidth(80),
+        2: const pw.FlexColumnWidth(),
+        3: const pw.FixedColumnWidth(180),
+      },
+      children: [
+        pw.TableRow(
+          decoration: const pw.BoxDecoration(color: PdfColors.red700),
+          children: [
+            cell(pw.Text('QTD', style: headerStyle)),
+            cell(pw.Text('EAN', style: headerStyle)),
+            cell(pw.Text('DESCRIÇÃO', style: headerStyle)),
+            cell(pw.Text('CÓDIGO DE BARRAS', style: headerStyle)),
+          ],
+        ),
+        for (final t in itens)
+          pw.TableRow(
+            children: [
+              cell(pw.Text(t.quantity.toString(), style: cellStyle)),
+              cell(pw.Text(t.ean, style: cellStyle)),
+              cell(pw.Text(t.description, style: cellStyle)),
+              pw.Padding(
+                padding: const pw.EdgeInsets.all(4),
+                child: pw.BarcodeWidget(
+                  barcode: Barcode.code128(),
+                  data: t.ean,
+                  height: 34,
+                  drawText: false,
+                ),
+              ),
+            ],
+          ),
+      ],
     );
   }
 

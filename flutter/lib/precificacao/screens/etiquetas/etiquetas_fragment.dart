@@ -441,69 +441,71 @@ class _EtiquetasFragmentState extends State<EtiquetasFragment>
               color: Colors.white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: AvulsaSpinnerDropdown(
-                        label: 'IMPRESSORA',
-                        icon: Icons.print,
-                        value: _printer,
-                        options: const ['Zebra 1', 'Zebra 2'],
-                        onChanged: (v) {
-                          if (v != null) setState(() => _printer = v);
-                        },
-                      ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: AvulsaSpinnerDropdown(
+                            label: 'IMPRESSORA',
+                            icon: Icons.print,
+                            value: _printer,
+                            options: const ['Zebra 1', 'Zebra 2'],
+                            onChanged: (v) {
+                              if (v != null) setState(() => _printer = v);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: AvulsaSpinnerDropdown(
+                            label: 'TIPO',
+                            icon: Icons.qr_code,
+                            value: _buscaTipo,
+                            options: const ['EAN', 'SAP', 'Descrição'],
+                            onChanged: (v) {
+                              if (v == null) return;
+                              setState(() {
+                                _buscaTipo = v;
+                                _eanHint = _baseHint;
+                                _eanKeyboardType = v == 'Descrição'
+                                    ? TextInputType.text
+                                    : TextInputType.number;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: AvulsaSpinnerDropdown(
+                            label: 'MODO',
+                            icon: Icons.tune,
+                            value: _modo,
+                            options: const ['Normal', 'Edição'],
+                            onChanged: (v) {
+                              if (v != null) setState(() => _modo = v);
+                            },
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: AvulsaSpinnerDropdown(
-                        label: 'TIPO',
-                        icon: Icons.qr_code,
-                        value: _buscaTipo,
-                        options: const ['EAN', 'SAP', 'Descrição'],
-                        onChanged: (v) {
-                          if (v == null) return;
-                          setState(() {
-                            _buscaTipo = v;
-                            _eanHint = _baseHint;
-                            _eanKeyboardType = v == 'Descrição'
-                                ? TextInputType.text
-                                : TextInputType.number;
-                          });
-                        },
-                      ),
+                  ),
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: AvulsaSearchField(
+                      controller: _eanController,
+                      focusNode: _eanFocus,
+                      placeholder: _eanHint,
+                      numerico: _buscaTipo == 'EAN' || _buscaTipo == 'SAP',
+                      buscando: buscando,
+                      onBuscar: () => _fetchAndAdd(_eanController.text),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: AvulsaSpinnerDropdown(
-                        label: 'MODO',
-                        icon: Icons.tune,
-                        value: _modo,
-                        options: const ['Normal', 'Edição'],
-                        onChanged: (v) {
-                          if (v != null) setState(() => _modo = v);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: AvulsaSearchField(
-              controller: _eanController,
-              focusNode: _eanFocus,
-              placeholder: _eanHint,
-              numerico: _buscaTipo == 'EAN' || _buscaTipo == 'SAP',
-              buscando: buscando,
-              onBuscar: () => _fetchAndAdd(_eanController.text),
             ),
           ),
         ),

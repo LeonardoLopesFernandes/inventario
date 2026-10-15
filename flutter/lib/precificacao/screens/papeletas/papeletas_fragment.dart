@@ -630,104 +630,106 @@ class _PapeletasFragmentState extends State<PapeletasFragment>
               color: Colors.white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14)),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    Row(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: AvulsaSpinnerDropdown(
-                            label: 'TIPO',
-                            icon: Icons.receipt_long,
-                            value: _tipo,
-                            options: const ['Normal', 'Promocional'],
-                            onChanged: (v) {
-                              if (v != null) setState(() => _tipo = v);
-                            },
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: AvulsaSpinnerDropdown(
+                                label: 'TIPO',
+                                icon: Icons.receipt_long,
+                                value: _tipo,
+                                options: const ['Normal', 'Promocional'],
+                                onChanged: (v) {
+                                  if (v != null) setState(() => _tipo = v);
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: AvulsaSpinnerDropdown(
+                                label: 'MODELO',
+                                icon: Icons.tune,
+                                value: _modelo,
+                                options: const [
+                                  'Misto',
+                                  'Promocional',
+                                  'Promocional Editável',
+                                  'Normal',
+                                  'Normal Editável',
+                                  'Vencimentos',
+                                ],
+                                onChanged: (v) {
+                                  if (v == null) return;
+                                  setState(() {
+                                    _modelo = v;
+                                    if (v == 'Promocional Editável') {
+                                      _tipo = 'Promocional';
+                                    }
+                                    if (v == 'Normal Editável') {
+                                      _tipo = 'Normal';
+                                    }
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: AvulsaSpinnerDropdown(
-                            label: 'MODELO',
-                            icon: Icons.tune,
-                            value: _modelo,
-                            options: const [
-                              'Misto',
-                              'Promocional',
-                              'Promocional Editável',
-                              'Normal',
-                              'Normal Editável',
-                              'Vencimentos',
-                            ],
-                            onChanged: (v) {
-                              if (v == null) return;
-                              setState(() {
-                                _modelo = v;
-                                if (v == 'Promocional Editável') {
-                                  _tipo = 'Promocional';
-                                }
-                                if (v == 'Normal Editável') {
-                                  _tipo = 'Normal';
-                                }
-                              });
-                            },
-                          ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: AvulsaSpinnerDropdown(
+                                label: 'BUSCA',
+                                icon: Icons.qr_code,
+                                value: _buscaTipo,
+                                options: const ['EAN', 'SAP', 'Descrição do item'],
+                                onChanged: (v) {
+                                  if (v == null) return;
+                                  setState(() {
+                                    _buscaTipo = v;
+                                    _eanHint = _baseHint;
+                                    _eanKeyboardType = _buscaNumerica
+                                        ? TextInputType.number
+                                        : TextInputType.text;
+                                  });
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: AvulsaSpinnerDropdown(
+                                label: 'TAMANHO',
+                                icon: Icons.aspect_ratio,
+                                value: _size,
+                                options: const ['1×1', '2×1', '4×1', '6×1'],
+                                onChanged: (v) {
+                                  if (v != null) setState(() => _size = v);
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AvulsaSpinnerDropdown(
-                            label: 'BUSCA',
-                            icon: Icons.qr_code,
-                            value: _buscaTipo,
-                            options: const ['EAN', 'SAP', 'Descrição do item'],
-                            onChanged: (v) {
-                              if (v == null) return;
-                              setState(() {
-                                _buscaTipo = v;
-                                _eanHint = _baseHint;
-                                _eanKeyboardType = _buscaNumerica
-                                    ? TextInputType.number
-                                    : TextInputType.text;
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: AvulsaSpinnerDropdown(
-                            label: 'TAMANHO',
-                            icon: Icons.aspect_ratio,
-                            value: _size,
-                            options: const ['1×1', '2×1', '4×1', '6×1'],
-                            onChanged: (v) {
-                              if (v != null) setState(() => _size = v);
-                            },
-                          ),
-                        ),
-                      ],
+                  ),
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: AvulsaSearchField(
+                      controller: _eanController,
+                      placeholder: _eanHint,
+                      numerico: _buscaNumerica,
+                      buscando: buscando,
+                      onBuscar: _addStandalone,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: AvulsaSearchField(
-              controller: _eanController,
-              placeholder: _eanHint,
-              numerico: _buscaNumerica,
-              buscando: buscando,
-              onBuscar: _addStandalone,
             ),
           ),
         ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:inventario/precificacao/core/constants.dart';
 import 'package:inventario/precificacao/core/lista_store.dart';
@@ -35,7 +36,11 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
   bool _processing = false;
   String _lastCode = '';
   int _lastCodeTime = 0;
-  int _added = 0;
+  int _lidas = 0;
+  String _toastMsg = '';
+  bool _toastErro = false;
+  bool _mostrarToast = false;
+  Timer? _toastTimer;
 
   @override
   void initState() {
@@ -63,21 +68,42 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
       }
     }
     if (raw == null) return;
+    final codigo = _normalizar(raw);
 
     if (!widget.continuo) {
       if (_popped) return;
       _popped = true;
-      Navigator.pop(context, raw);
+      Navigator.pop(context, codigo);
       return;
     }
 
     final now = DateTime.now().millisecondsSinceEpoch;
     // Debounce: ignora o mesmo código por 3s e não processa em paralelo.
     if (_processing) return;
-    if (raw == _lastCode && now - _lastCodeTime < _debounceMs) return;
-    _lastCode = raw;
+    if (codigo == _lastCode && now - _lastCodeTime < _debounceMs) return;
+    _lastCode = codigo;
     _lastCodeTime = now;
-    _processar(raw);
+    _processar(codigo);
+  }
+
+  /// Códigos que iniciam com "0" (ex.: EAN-13 de UPC-A) — ignora o(s) zero(s)
+  /// inicial(is) e lê a partir do primeiro dígito diferente de zero.
+  String _normalizar(String raw) {
+    if (!raw.startsWith('0')) return raw;
+    final semZeros = raw.replaceFirst(RegExp(r'^0+'), '');
+    return semZeros.isEmpty ? raw : semZeros;
+  }
+
+  void _exibirToast(String msg, {bool erro = false}) {
+    _toastTimer?.cancel();
+    setState(() {
+      _toastMsg = msg;
+      _toastErro = erro;
+      _mostrarToast = true;
+    });
+    _toastTimer = Timer(const Duration(milliseconds: 1400), () {
+      if (mounted) setState(() => _mostrarToast = false);
+    });
   }
 
   Future<void> _processar(String ean) async {
@@ -93,6 +119,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
       if (!mounted) return;
       if (resp.items.isEmpty) {
         Beep.error();
+        _exibirToast('Código não encontrado: $ean', erro: true);
         return;
       }
       final lista = await ListaStore.instance.getEtiquetas();
@@ -107,8 +134,9 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
       await ListaStore.instance.saveEtiquetas(lista);
       await ListaStore.instance.setColagem(ean);
       if (!mounted) return;
-      setState(() => _added += resp.items.length);
+      _lidas++;
       Beep.success();
+      _exibirToast('$_lidas ${_lidas == 1 ? 'etiqueta lida' : 'etiquetas lidas'}');
     } on ApiException catch (e) {
       if (e.statusCode == 401) {
         Beep.error();
@@ -116,9 +144,11 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
         return;
       }
       Beep.error();
+      _exibirToast('Erro de leitura: $ean', erro: true);
     } catch (e) {
       LogHelper.e('BarcodeScanner: erro na leitura contínua', e);
       Beep.error();
+      _exibirToast('Erro de leitura: $ean', erro: true);
     } finally {
       _processing = false;
     }
@@ -206,24 +236,34 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
             if (widget.continuo)
               Positioned(
                 bottom: 56,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Text(
-                      _added == 1
-                          ? '1 item adicionado'
-                          : '$_added itens adicionados',
-                      style: const TextStyle(
-                        color: Color(0xFFD7193F),
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
+                left: 16,
+                right: 16,
+                child: IgnorePointer(
+                  ignoring: true,
+                  child: AnimatedOpacity(
+                    opacity: _mostrarToast ? 1 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: _toastErro
+                              ? const Color(0xFFD32F2F)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Text(
+                          _toastMsg,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: _toastErro
+                                ? Colors.white
+                                : const Color(0xFFD7193F),
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -237,6 +277,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
 
   @override
   void dispose() {
+    _toastTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

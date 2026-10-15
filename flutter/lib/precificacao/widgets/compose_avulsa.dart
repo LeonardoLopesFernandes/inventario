@@ -129,32 +129,99 @@ class AvulsaSearchField extends StatelessWidget {
                 ),
               ),
             ),
-            Material(
-              color: avulsaRed,
-              child: InkWell(
-                onTap: buscando ? null : onBuscar,
-                child: SizedBox(
-                  width: 72,
-                  height: 52,
-                  child: Center(
-                    child: buscando
-                        ? const Text('...',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14))
-                        : Icon(
-                            numerico
-                                ? Icons.qr_code_scanner
-                                : Icons.search,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                  ),
-                ),
-              ),
+            _BotaoBuscarAnimado(
+              numerico: numerico,
+              buscando: buscando,
+              onTap: onBuscar,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Botão de busca com animação de círculo girando em volta do ícone (lupa/QR)
+/// e spinner quando está buscando.
+class _BotaoBuscarAnimado extends StatefulWidget {
+  final bool numerico;
+  final bool buscando;
+  final VoidCallback onTap;
+
+  const _BotaoBuscarAnimado({
+    required this.numerico,
+    required this.buscando,
+    required this.onTap,
+  });
+
+  @override
+  State<_BotaoBuscarAnimado> createState() => _BotaoBuscarAnimadoState();
+}
+
+class _BotaoBuscarAnimadoState extends State<_BotaoBuscarAnimado>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final icon =
+        widget.numerico ? Icons.qr_code_scanner : Icons.search;
+    return Material(
+      color: avulsaRed,
+      child: InkWell(
+        onTap: widget.buscando ? null : widget.onTap,
+        child: SizedBox(
+          width: 72,
+          height: 52,
+          child: Center(
+            child: widget.buscando
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      valueColor: AlwaysStoppedAnimation(Colors.white),
+                    ),
+                  )
+                : SizedBox(
+                    width: 34,
+                    height: 34,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        RotationTransition(
+                          turns: _controller,
+                          child: const SizedBox(
+                            width: 34,
+                            height: 34,
+                            child: CircularProgressIndicator(
+                              value: 0.72,
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(
+                                  Color(0x8AFFFFFF)),
+                            ),
+                          ),
+                        ),
+                        Icon(icon, color: Colors.white, size: 18),
+                      ],
+                    ),
+                  ),
+          ),
         ),
       ),
     );

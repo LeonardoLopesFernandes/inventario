@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
+import 'package:inventario/utils/app_version.dart';
 
-/// Tela/widget de autenticação: ícone com efeito de pulso + brilho dinâmico.
-class AuthLoader extends StatefulWidget {
+/// Tela/widget de autenticação: anel girando (Lottie) ao redor do ícone,
+/// título e rodapé com a versão do app.
+class AuthLoader extends StatelessWidget {
   final String titulo;
   final String? subtitulo;
 
@@ -12,37 +15,6 @@ class AuthLoader extends StatefulWidget {
   });
 
   @override
-  State<AuthLoader> createState() => _AuthLoaderState();
-}
-
-class _AuthLoaderState extends State<AuthLoader>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _scale;
-  late final Animation<double> _glow;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
-    _scale = Tween<double>(begin: 0.92, end: 1.08).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-    _glow = Tween<double>(begin: 6.0, end: 20.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
@@ -50,35 +22,30 @@ class _AuthLoaderState extends State<AuthLoader>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) => Transform.scale(
-                scale: _scale.value,
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.35),
-                        blurRadius: _glow.value,
-                        spreadRadius: _glow.value / 3,
-                      ),
-                    ],
+            SizedBox(
+              width: 150,
+              height: 150,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Lottie.asset(
+                    'assets/lottie/loader_ring.json',
+                    width: 150,
+                    height: 150,
+                    fit: BoxFit.contain,
+                    repeat: true,
                   ),
-                  child: child,
-                ),
-              ),
-              child: Image.asset(
-                'assets/drawables/loja.png',
-                width: 120,
-                height: 120,
+                  Image.asset(
+                    'assets/drawables/loja.png',
+                    width: 82,
+                    height: 82,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: 32),
             Text(
-              widget.titulo,
+              titulo,
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -86,22 +53,18 @@ class _AuthLoaderState extends State<AuthLoader>
                 letterSpacing: 0.5,
               ),
             ),
-            if (widget.subtitulo != null) ...[
+            if (subtitulo != null) ...[
               const SizedBox(height: 8),
               Text(
-                widget.subtitulo!,
+                subtitulo!,
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 14, color: Colors.white70),
               ),
             ],
-            const SizedBox(height: 48),
-            const SizedBox(
-              width: 32,
-              height: 32,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: Colors.white,
-              ),
+            const SizedBox(height: 40),
+            Text(
+              'Versão $appVersion',
+              style: const TextStyle(fontSize: 12, color: Colors.white54),
             ),
           ],
         ),

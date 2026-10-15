@@ -68,7 +68,7 @@ jobs:
       - name: Build release APK (arm64-v8a, updatable)
         run: |
           VERSION_CODE=$((2000 + BUILD_NUMBER))
-          flutter build apk --split-per-abi --target-platform android-arm64 --build-number=$VERSION_CODE --build-name="1.0.$BUILD_NUMBER" --dart-define=MICROSOFT_CLIENT_SECRET=$microsoftClientSecret --split-debug-info=build/symbols
+          flutter build apk --split-per-abi --target-platform android-arm64 --build-number=$VERSION_CODE --build-name="1.0.$BUILD_NUMBER" --dart-define=MICROSOFT_CLIENT_SECRET=$microsoftClientSecret --dart-define=APP_VERSION=${{ github.ref_name }} --split-debug-info=build/symbols
         env:
           KEYSTORE_PATH: ${{ github.workspace }}/release-key.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
