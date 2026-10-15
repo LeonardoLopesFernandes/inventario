@@ -127,7 +127,12 @@ class _TrocaLoginWebViewScreenState extends State<TrocaLoginWebViewScreen> {
           if (_carregando)
             Container(
               color: const Color(0xFFD32F2F),
-              child: const AuthLoader(titulo: 'Troca Fácil', subtitulo: 'Autenticando...'),
+              child: const AuthLoader(
+                titulo: 'Troca Fácil',
+                subtitulo: 'Autenticando...',
+                icone: 'assets/drawables/troca.png',
+                iconeCor: Colors.white,
+              ),
             ),
         ],
       ),

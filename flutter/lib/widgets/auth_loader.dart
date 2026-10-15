@@ -8,10 +8,18 @@ class AuthLoader extends StatelessWidget {
   final String titulo;
   final String? subtitulo;
 
+  /// Ícone exibido no centro do anel (padrão: loja.png).
+  final String icone;
+
+  /// Cor para pintar o ícone (ex.: branco, quando o ícone é transparente).
+  final Color? iconeCor;
+
   const AuthLoader({
     super.key,
     this.titulo = 'Loja Mobile',
     this.subtitulo = 'Autenticando...',
+    this.icone = 'assets/drawables/mobile.png',
+    this.iconeCor,
   });
 
   @override
@@ -36,9 +44,11 @@ class AuthLoader extends StatelessWidget {
                     repeat: true,
                   ),
                   Image.asset(
-                    'assets/drawables/loja.png',
+                    icone,
                     width: 82,
                     height: 82,
+                    color: iconeCor,
+                    colorBlendMode: iconeCor == null ? null : BlendMode.srcIn,
                   ),
                 ],
               ),

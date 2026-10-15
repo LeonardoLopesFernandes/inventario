@@ -78,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             repeat: true,
                           ),
                           Image.asset(
-                            'assets/drawables/loja.png',
+                            'assets/drawables/mobile.png',
                             width: 84,
                             height: 84,
                           ),
