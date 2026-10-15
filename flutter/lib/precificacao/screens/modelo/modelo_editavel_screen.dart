@@ -30,7 +30,7 @@ const Color _kPreviewBg = Color(0xFFEEEEEE);
 /// Espelha a ModeloEditavelActivity do MLoja: tela sem AppBar com título
 /// centralizado, card de pré-visualização composta embutido, opção de
 /// overlay promocional, quantidade de cópias, seção "EDITAR ITENS" (no modo
-/// editável) e barra fixa com VOLTAR / IMPRIMIR / COMPARTILHAR PDF.
+/// editável) e barra fixa com COMPARTILHAR PDF / IMPRIMIR.
 class ModeloEditavelScreen extends StatefulWidget {
   const ModeloEditavelScreen({super.key});
 
