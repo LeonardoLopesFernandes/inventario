@@ -366,6 +366,12 @@ class _AvulsaEtiquetaCardState extends State<AvulsaEtiquetaCard> {
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: const BoxDecoration(
         color: Colors.white,
+        border: Border(
+          top: BorderSide(color: avulsaGreen),
+          bottom: BorderSide(color: avulsaGreen),
+          right: BorderSide(color: avulsaGreen),
+          left: BorderSide(color: avulsaGreen),
+        ),
         borderRadius: BorderRadius.horizontal(right: Radius.circular(12)),
       ),
       alignment: Alignment.center,
@@ -608,6 +614,12 @@ class _AvulsaPapeletaCardState extends State<AvulsaPapeletaCard> {
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: const BoxDecoration(
         color: Colors.white,
+        border: Border(
+          top: BorderSide(color: avulsaGreen),
+          bottom: BorderSide(color: avulsaGreen),
+          right: BorderSide(color: avulsaGreen),
+          left: BorderSide(color: avulsaGreen),
+        ),
         borderRadius: BorderRadius.horizontal(right: Radius.circular(12)),
       ),
       alignment: Alignment.center,
