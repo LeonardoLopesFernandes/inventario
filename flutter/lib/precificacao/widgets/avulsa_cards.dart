@@ -85,7 +85,7 @@ Widget _greenBadge(String valor, String tipo, Color cor, {bool parcelado = false
       children: [
         Flexible(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(vertical: 1),
             child: Text(
               valor,
               maxLines: 1,
@@ -99,7 +99,7 @@ Widget _greenBadge(String valor, String tipo, Color cor, {bool parcelado = false
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         Container(
           height: 28,
           padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -277,7 +277,7 @@ class _AvulsaEtiquetaCardState extends State<AvulsaEtiquetaCard> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -288,7 +288,7 @@ class _AvulsaEtiquetaCardState extends State<AvulsaEtiquetaCard> {
                       _eanLinha(context,
                           'DEP: $deptNum | EAN: ${item.ean} / SAP: ${item.sap}',
                           item.ean),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       if (p.leve != null)
                         _greenBadgeComLeve(p)
                       else
@@ -319,7 +319,7 @@ class _AvulsaEtiquetaCardState extends State<AvulsaEtiquetaCard> {
         children: [
           Flexible(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: 1),
               child: Text(
                 p.leve!,
                 maxLines: 1,
@@ -341,7 +341,7 @@ class _AvulsaEtiquetaCardState extends State<AvulsaEtiquetaCard> {
           ),
           Flexible(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: 1),
               child: Text(
                 p.valor,
                 maxLines: 1,
@@ -353,7 +353,7 @@ class _AvulsaEtiquetaCardState extends State<AvulsaEtiquetaCard> {
               ),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           _whiteTypeBadge(p.tipo, p.cor),
         ],
       ),
@@ -525,7 +525,7 @@ class _AvulsaPapeletaCardState extends State<AvulsaPapeletaCard> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -536,7 +536,7 @@ class _AvulsaPapeletaCardState extends State<AvulsaPapeletaCard> {
                       _eanLinha(context,
                           'DEP: $deptNum | EAN: ${item.ean} / SAP: ${item.sap}',
                           item.ean),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       if (p.leve != null)
                         _greenBadgeComLeve(p)
                       else
@@ -567,7 +567,7 @@ class _AvulsaPapeletaCardState extends State<AvulsaPapeletaCard> {
         children: [
           Flexible(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: 1),
               child: Text(
                 p.leve!,
                 maxLines: 1,
@@ -589,7 +589,7 @@ class _AvulsaPapeletaCardState extends State<AvulsaPapeletaCard> {
           ),
           Flexible(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: 1),
               child: Text(
                 p.valor,
                 maxLines: 1,
@@ -601,7 +601,7 @@ class _AvulsaPapeletaCardState extends State<AvulsaPapeletaCard> {
               ),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           _whiteTypeBadge(p.tipo, p.cor),
         ],
       ),
