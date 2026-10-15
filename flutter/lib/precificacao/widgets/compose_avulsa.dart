@@ -141,9 +141,9 @@ class AvulsaSearchField extends StatelessWidget {
   }
 }
 
-/// Botão de busca com animação de círculo girando em volta do ícone (lupa/QR)
-/// e spinner quando está buscando.
-class _BotaoBuscarAnimado extends StatefulWidget {
+/// Botão de busca: mostra o ícone (lupa/QR) e só anima (spinner) quando está
+/// buscando — ou seja, a animação roda apenas ao clicar.
+class _BotaoBuscarAnimado extends StatelessWidget {
   final bool numerico;
   final bool buscando;
   final VoidCallback onTap;
@@ -155,41 +155,17 @@ class _BotaoBuscarAnimado extends StatefulWidget {
   });
 
   @override
-  State<_BotaoBuscarAnimado> createState() => _BotaoBuscarAnimadoState();
-}
-
-class _BotaoBuscarAnimadoState extends State<_BotaoBuscarAnimado>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1100),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final icon =
-        widget.numerico ? Icons.qr_code_scanner : Icons.search;
+    final icon = numerico ? Icons.qr_code_scanner : Icons.search;
     return Material(
       color: avulsaRed,
       child: InkWell(
-        onTap: widget.buscando ? null : widget.onTap,
+        onTap: buscando ? null : onTap,
         child: SizedBox(
           width: 72,
           height: 52,
           child: Center(
-            child: widget.buscando
+            child: buscando
                 ? const SizedBox(
                     width: 24,
                     height: 24,
@@ -198,29 +174,7 @@ class _BotaoBuscarAnimadoState extends State<_BotaoBuscarAnimado>
                       valueColor: AlwaysStoppedAnimation(Colors.white),
                     ),
                   )
-                : SizedBox(
-                    width: 34,
-                    height: 34,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        RotationTransition(
-                          turns: _controller,
-                          child: const SizedBox(
-                            width: 34,
-                            height: 34,
-                            child: CircularProgressIndicator(
-                              value: 0.72,
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation(
-                                  Color(0x8AFFFFFF)),
-                            ),
-                          ),
-                        ),
-                        Icon(icon, color: Colors.white, size: 18),
-                      ],
-                    ),
-                  ),
+                : Icon(icon, color: Colors.white, size: 22),
           ),
         ),
       ),
