@@ -170,7 +170,7 @@ class ListaPdfService {
     pw.Widget cell(pw.Widget child, {pw.Alignment? align}) => pw.Padding(
           padding: const pw.EdgeInsets.all(4),
           child: pw.Align(
-            alignment: align ?? pw.Alignment.centerLeft,
+            alignment: align ?? pw.Alignment.center,
             child: child,
           ),
         );
@@ -179,35 +179,33 @@ class ListaPdfService {
       border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
       columnWidths: {
         0: const pw.FixedColumnWidth(40),
-        1: const pw.FixedColumnWidth(80),
+        1: const pw.FixedColumnWidth(90),
         2: const pw.FlexColumnWidth(),
-        3: const pw.FixedColumnWidth(180),
+        3: const pw.FixedColumnWidth(190),
       },
       children: [
         pw.TableRow(
           decoration: const pw.BoxDecoration(color: PdfColors.red700),
           children: [
-            cell(pw.Text('QTD', style: headerStyle)),
-            cell(pw.Text('EAN', style: headerStyle)),
-            cell(pw.Text('DESCRIÇÃO', style: headerStyle)),
-            cell(pw.Text('CÓDIGO DE BARRAS', style: headerStyle)),
+            cell(pw.Text('QTD', style: headerStyle, textAlign: pw.TextAlign.center)),
+            cell(pw.Text('COD EAN', style: headerStyle, textAlign: pw.TextAlign.center)),
+            cell(pw.Text('DESCRIÇÃO', style: headerStyle, textAlign: pw.TextAlign.center)),
+            cell(pw.Text('CÓDIGO DE BARRAS', style: headerStyle, textAlign: pw.TextAlign.center)),
           ],
         ),
         for (final t in itens)
           pw.TableRow(
             children: [
-              cell(pw.Text(t.quantity.toString(), style: cellStyle)),
-              cell(pw.Text(t.ean, style: cellStyle)),
-              cell(pw.Text(t.description, style: cellStyle)),
-              pw.Padding(
-                padding: const pw.EdgeInsets.all(4),
-                child: pw.BarcodeWidget(
-                  barcode: Barcode.code128(),
-                  data: t.ean,
-                  height: 34,
-                  drawText: false,
-                ),
-              ),
+              cell(pw.Text(t.quantity.toString(), style: cellStyle, textAlign: pw.TextAlign.center)),
+              cell(pw.Text(t.ean, style: cellStyle, textAlign: pw.TextAlign.center)),
+              cell(pw.Text(t.description, style: cellStyle, textAlign: pw.TextAlign.center)),
+              cell(pw.BarcodeWidget(
+                barcode: Barcode.code128(),
+                data: t.ean,
+                width: 175,
+                height: 34,
+                drawText: false,
+              )),
             ],
           ),
       ],
