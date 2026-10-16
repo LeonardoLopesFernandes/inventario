@@ -174,13 +174,8 @@ class _BotaoBuscarAnimado extends StatelessWidget {
                     ),
                   )
                 : numerico
-                    ? Image.asset(
-                        'assets/icons/ic_scanner.png',
-                        width: 24,
-                        height: 24,
-                        color: Colors.white,
-                        colorBlendMode: BlendMode.srcIn,
-                      )
+                    ? const Icon(Icons.qr_code_scanner,
+                        color: Colors.white, size: 22)
                     : const Icon(Icons.search, color: Colors.white, size: 22),
           ),
         ),
