@@ -130,7 +130,6 @@ class AvulsaSearchField extends StatelessWidget {
               ),
             ),
             _BotaoBuscarAnimado(
-              numerico: numerico,
               buscando: buscando,
               onTap: onBuscar,
             ),
@@ -141,15 +140,13 @@ class AvulsaSearchField extends StatelessWidget {
   }
 }
 
-/// Botão de busca: ícone de leitor (EAN/SAP) ou lupa (Descrição); só anima
+/// Botão de busca: ícone de lupa; só anima
 /// (spinner) quando está buscando — ou seja, a animação roda apenas ao clicar.
 class _BotaoBuscarAnimado extends StatelessWidget {
-  final bool numerico;
   final bool buscando;
   final VoidCallback onTap;
 
   const _BotaoBuscarAnimado({
-    required this.numerico,
     required this.buscando,
     required this.onTap,
   });
@@ -173,10 +170,7 @@ class _BotaoBuscarAnimado extends StatelessWidget {
                       valueColor: AlwaysStoppedAnimation(Colors.white),
                     ),
                   )
-                : numerico
-                    ? const Icon(Icons.qr_code_scanner,
-                        color: Colors.white, size: 22)
-                    : const Icon(Icons.search, color: Colors.white, size: 22),
+                : const Icon(Icons.search, color: Colors.white, size: 22),
           ),
         ),
       ),

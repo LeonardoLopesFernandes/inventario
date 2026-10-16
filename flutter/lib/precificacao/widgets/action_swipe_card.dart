@@ -85,9 +85,8 @@ class _SwipeToTrashItemState extends State<SwipeToTrashItem>
             child: Container(
               alignment: Alignment.centerLeft,
               padding: const EdgeInsets.only(left: 20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD32F2F),
-                borderRadius: BorderRadius.circular(8),
+              decoration: const BoxDecoration(
+                color: Color(0xFFD32F2F),
               ),
               child: AnimatedScale(
                 scale: isTrashOpen ? 1.3 : 1.0,

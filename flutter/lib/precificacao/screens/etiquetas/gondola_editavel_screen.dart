@@ -47,6 +47,15 @@ bool _ehDepor(PrintingData d) {
       promo < normal;
 }
 
+/// De/Por + Parcelado combinado (mostra "EM ATÉ" acima do parcelamento).
+bool _ehDeporParcelado(PrintingData d) {
+  final promo = d.promotionalPrice?.value ?? 0;
+  final normal = d.price?.value ?? 0;
+  return (d.installments?.installmentQuantity ?? 0) > 0 &&
+      promo > 0 &&
+      (normal <= 0 || promo < normal);
+}
+
 class GondolaEditavelScreen extends StatefulWidget {
   final List<PrintingData> items;
   final String printerId;
@@ -348,6 +357,7 @@ class _GondolaEditavelScreenState extends State<GondolaEditavelScreen> {
                               cifrao: _cifrao(d),
                               valor: _valor(d),
                               unidade: 'R\$/PCE ${_fmt(d.unitValue)}',
+                              promoLinha0: _promoLinha0(d),
                               promoLinha1: _promoLinha1(d),
                               promoLinha2: _promoLinha2(d),
                             ),
@@ -439,6 +449,11 @@ class _GondolaEditavelScreenState extends State<GondolaEditavelScreen> {
     }
     final v = _parse(_precoController.text);
     return _fmt(v > 0 ? v : (d.price?.value ?? 0));
+  }
+
+  String _promoLinha0(PrintingData d) {
+    if (_ehDeporParcelado(d)) return 'EM ATÉ';
+    return '';
   }
 
   String _promoLinha1(PrintingData d) {
@@ -551,6 +566,7 @@ class _GondolaPreviewPainter extends CustomPainter {
   final String cifrao;
   final String valor;
   final String unidade;
+  final String promoLinha0;
   final String promoLinha1;
   final String promoLinha2;
 
@@ -563,6 +579,7 @@ class _GondolaPreviewPainter extends CustomPainter {
     required this.cifrao,
     required this.valor,
     required this.unidade,
+    required this.promoLinha0,
     required this.promoLinha1,
     required this.promoLinha2,
   });
@@ -745,6 +762,11 @@ class _GondolaPreviewPainter extends CustomPainter {
 
     // Caixa preta (promocional)
     if (modo == 1) {
+      if (promoLinha0.isNotEmpty) {
+        final tam = _ajustarTexto(promoLinha0, 17, 10, _boxMax);
+        draw(promoLinha0, tx(_boxCx), ty(_boxCy - 44), tam, TextAlign.center,
+            const Color(0xFFFFE600));
+      }
       if (promoLinha1.isNotEmpty) {
         final tam = _ajustarTexto(promoLinha1, 54, 24, _boxMax);
         draw(promoLinha1, tx(_boxCx), ty(_boxCy), tam, TextAlign.center,
@@ -763,6 +785,7 @@ class _GondolaPreviewPainter extends CustomPainter {
       old.template != template ||
       old.descricao != descricao ||
       old.valor != valor ||
+      old.promoLinha0 != promoLinha0 ||
       old.promoLinha1 != promoLinha1 ||
       old.promoLinha2 != promoLinha2 ||
       old.unidade != unidade ||

@@ -143,17 +143,20 @@ class AvulsaEtiquetaCard extends StatefulWidget {
 
 class _AvulsaEtiquetaCardState extends State<AvulsaEtiquetaCard> {
   late TextEditingController _qty;
+  int _lastQty = 0;
 
   @override
   void initState() {
     super.initState();
+    _lastQty = widget.tag.quantity;
     _qty = TextEditingController(text: widget.tag.quantity.toString());
   }
 
   @override
   void didUpdateWidget(covariant AvulsaEtiquetaCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.tag.quantity != widget.tag.quantity) {
+    if (widget.tag.quantity != _lastQty) {
+      _lastQty = widget.tag.quantity;
       _qty.text = widget.tag.quantity.toString();
     }
   }
@@ -244,7 +247,7 @@ class _AvulsaEtiquetaCardState extends State<AvulsaEtiquetaCard> {
       margin: EdgeInsets.zero,
       elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
       ),
       color: Colors.white,
       child: Padding(
@@ -400,17 +403,20 @@ class AvulsaPapeletaCard extends StatefulWidget {
 
 class _AvulsaPapeletaCardState extends State<AvulsaPapeletaCard> {
   late TextEditingController _qty;
+  int _lastQty = 0;
 
   @override
   void initState() {
     super.initState();
+    _lastQty = widget.item.quantity;
     _qty = TextEditingController(text: widget.item.quantity.toString());
   }
 
   @override
   void didUpdateWidget(covariant AvulsaPapeletaCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.item.quantity != widget.item.quantity) {
+    if (widget.item.quantity != _lastQty) {
+      _lastQty = widget.item.quantity;
       _qty.text = widget.item.quantity.toString();
     }
   }
@@ -492,7 +498,7 @@ class _AvulsaPapeletaCardState extends State<AvulsaPapeletaCard> {
       margin: EdgeInsets.zero,
       elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
       ),
       color: Colors.white,
       child: Padding(
