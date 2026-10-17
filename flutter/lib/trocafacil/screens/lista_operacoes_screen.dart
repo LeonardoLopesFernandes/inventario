@@ -185,6 +185,14 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
     );
     if (!mounted) return;
     if (acao == 'reimprimir') {
+      final etiquetas = op.products.expand((p) => p.tags).toList();
+      if (etiquetas.isNotEmpty) {
+        await Clipboard.setData(ClipboardData(text: etiquetas.first));
+        if (mounted) {
+          ToastUtils.show(
+              context, 'Nº da etiqueta copiado: ${etiquetas.first}');
+        }
+      }
       final ok = await abrirEtiquetaTroca();
       if (!ok && mounted) {
         ToastUtils.showError(context, 'Não foi possível abrir a etiqueta');
