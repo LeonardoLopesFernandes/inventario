@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:inventario/network/session_manager.dart';
 import 'package:inventario/widgets/auth_loader.dart';
@@ -40,6 +41,11 @@ class _TrocaLoginWebViewScreenState extends State<TrocaLoginWebViewScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) => _capturar(url),
+          onPageFinished: (url) {
+            if (!mounted || _concluido) return;
+            if (_carregando) setState(() => _carregando = false);
+            _capturar(url);
+          },
           onNavigationRequest: (req) {
             _capturar(req.url);
             return NavigationDecision.navigate;
@@ -105,36 +111,32 @@ class _TrocaLoginWebViewScreenState extends State<TrocaLoginWebViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
-        title: const Text('Login Troca Fácil',
-            style: TextStyle(
-                color: Colors.black87,
-                fontSize: 18,
-                fontWeight: FontWeight.w500)),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Color(0xFFD32F2F),
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
       ),
-      body: Stack(
-        children: [
-          if (_pronto)
-            WebViewWidget(controller: _controller)
-          else
-            const SizedBox.shrink(),
-          if (_carregando)
-            Container(
-              color: const Color(0xFFD32F2F),
-              child: const AuthLoader(
-                titulo: 'Troca Fácil',
-                subtitulo: 'Autenticando...',
-                icone: 'assets/drawables/troca.png',
-                iconeCor: Colors.white,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFD32F2F),
+        body: Stack(
+          children: [
+            if (_pronto && !_carregando)
+              WebViewWidget(controller: _controller)
+            else
+              const SizedBox.shrink(),
+            if (_carregando)
+              Container(
+                color: const Color(0xFFD32F2F),
+                child: const AuthLoader(
+                  titulo: 'Troca Fácil',
+                  subtitulo: 'Autenticando...',
+                  icone: 'assets/drawables/troca.png',
+                  iconeCor: Colors.white,
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
