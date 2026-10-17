@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../network/troca_session.dart';
 
-/// Abre/ renderiza o anexo (PDF da etiqueta/vale troca) da Troca Fácil
-/// em WebView: https://trocafacil.americanas.io/etiqueta
+/// Abre/renderiza o anexo (PDF da etiqueta/vale troca) da Troca Fácil em
+/// WebView: https://trocafacil.americanas.io/etiqueta
+///
+/// A página usa o token da sessão (localStorage). Como o WebView abre "limpo",
+/// injetamos o token do login da Troca Fácil no localStorage do site e
+/// recarregamos, para a etiqueta renderizar autenticada.
 class TrocaEtiquetaScreen extends StatefulWidget {
   /// Token (opcional) para autenticar a página; quando nulo usa o salvo.
   final String? token;
@@ -14,8 +18,13 @@ class TrocaEtiquetaScreen extends StatefulWidget {
 }
 
 class _TrocaEtiquetaScreenState extends State<TrocaEtiquetaScreen> {
+  static const String _etiquetaUrl =
+      'https://trocafacil.americanas.io/etiqueta';
+
   late final WebViewController _controller;
   bool _pronto = false;
+  bool _injetou = false;
+  String _token = '';
 
   @override
   void initState() {
@@ -25,21 +34,36 @@ class _TrocaEtiquetaScreenState extends State<TrocaEtiquetaScreen> {
 
   Future<void> _init() async {
     final troca = await TrocaSession.create();
-    final token = widget.token ?? troca.getToken() ?? '';
-    final base = Uri.parse('https://trocafacil.americanas.io/etiqueta');
-    final uri = token.isEmpty
-        ? base
-        : base.replace(queryParameters: {'token': token});
+    _token = widget.token ?? troca.getToken() ?? '';
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setUserAgent(
           'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 '
           '(KHTML, like Gecko) Chrome/149.0.0.0 Mobile Safari/537.36')
-      ..setNavigationDelegate(NavigationDelegate());
-    await _controller.loadRequest(uri);
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageFinished: (url) => _injetarToken(url),
+      ));
+    await _controller.loadRequest(Uri.parse(_etiquetaUrl));
     if (!mounted) return;
     setState(() => _pronto = true);
+  }
+
+  Future<void> _injetarToken(String url) async {
+    if (_injetou || _token.isEmpty) return;
+    if (!url.contains('trocafacil.americanas.io')) return;
+    _injetou = true;
+    final t = _token.replaceAll('\\', '\\\\').replaceAll("'", "\\'");
+    final js = "try{"
+        "localStorage.setItem('newToken','$t');"
+        "localStorage.setItem('token','$t');"
+        "sessionStorage.setItem('newToken','$t');"
+        "sessionStorage.setItem('token','$t');"
+        "}catch(e){}";
+    try {
+      await _controller.runJavaScript(js);
+    } catch (_) {}
+    await _controller.loadRequest(Uri.parse(_etiquetaUrl));
   }
 
   @override
