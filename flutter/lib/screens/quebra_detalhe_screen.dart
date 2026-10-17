@@ -209,7 +209,7 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
     );
     if (ok != true) return;
     try {
-      await _service!.processBreakage(widget.breakageId);
+      await _service!.openBreakage(widget.breakageId, _itens);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Quebra aberta com sucesso'),

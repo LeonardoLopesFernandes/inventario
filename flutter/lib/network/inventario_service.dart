@@ -306,8 +306,11 @@ class InventarioService {
     return null;
   }
 
-  /// Processa (abre/finaliza) a quebra.
-  Future<void> processBreakage(String breakageId) async {
-    await client.post('web/breakage/$breakageId/process');
+  /// Abre (finaliza) a quebra: PUT /web/breakage/{id}/open com os itens.
+  Future<void> openBreakage(
+      String breakageId, List<BreakageItem> items) async {
+    await client.put('web/breakage/$breakageId/open', body: {
+      'items': items.map((e) => {'id': e.id, 'reasonId': ''}).toList(),
+    });
   }
 }
