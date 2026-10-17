@@ -3,7 +3,6 @@ import 'package:barcode/barcode.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-
 /// Gera o PDF do comprovante/etiqueta de troca (layout do site) e salva em
 /// `Download/Troca` via canal nativo com MediaStore.
 class TrocaEtiquetaPdf {
@@ -18,12 +17,23 @@ class TrocaEtiquetaPdf {
     required String motivo,
   }) async {
     final doc = pw.Document();
+    pw.MemoryImage? icone;
+    try {
+      final bytes = await rootBundle.load('assets/drawables/troca.png');
+      icone = pw.MemoryImage(bytes.buffer.asUint8List());
+    } catch (_) {}
     doc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(18),
         build: (ctx) => [
-          _card1(loja: loja, data: data, tradeId: tradeId, produto: produto),
+          _card1(
+            loja: loja,
+            data: data,
+            tradeId: tradeId,
+            produto: produto,
+            icone: icone,
+          ),
           pw.SizedBox(height: 12),
           _card2(
             loja: loja,
@@ -61,6 +71,7 @@ class TrocaEtiquetaPdf {
     required String data,
     required String tradeId,
     required String produto,
+    pw.MemoryImage? icone,
   }) {
     return pw.Container(
       decoration: pw.BoxDecoration(
@@ -72,12 +83,41 @@ class TrocaEtiquetaPdf {
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Text('Comprovante de recebimento de troca',
-              style:
-                  pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold)),
-          pw.SizedBox(height: 2),
-          pw.Text('Item recebido na loja $loja',
-              style: const pw.TextStyle(fontSize: 11, color: PdfColors.grey700)),
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              if (icone != null) ...[
+                pw.Container(
+                  width: 44,
+                  height: 44,
+                  padding: const pw.EdgeInsets.all(8),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColor.fromInt(0xFFFFEBEE),
+                    shape: pw.BoxShape.circle,
+                  ),
+                  child: pw.Image(icone, fit: pw.BoxFit.contain),
+                ),
+                pw.SizedBox(width: 12),
+              ],
+              pw.Expanded(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text('Comprovante de recebimento de troca',
+                        style: pw.TextStyle(
+                            fontSize: 15, fontWeight: pw.FontWeight.bold)),
+                    pw.SizedBox(height: 3),
+                    pw.Text('Descrição do item: $produto',
+                        style: const pw.TextStyle(fontSize: 10)),
+                    pw.SizedBox(height: 1),
+                    pw.Text('Item recebido na loja $loja',
+                        style: const pw.TextStyle(
+                            fontSize: 10, color: PdfColors.grey700)),
+                  ],
+                ),
+              ),
+            ],
+          ),
           pw.SizedBox(height: 12),
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
