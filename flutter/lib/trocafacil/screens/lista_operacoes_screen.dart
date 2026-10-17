@@ -258,10 +258,8 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
           tradeId: op.tradeId,
           loja: s(det?['storeNumber']),
           data: TrocaApi.fmtIsoDate(s(det?['operationDate'])),
-          cliente: nome,
-          documento: doc,
           produto: s(prod['productDescription']),
-          valor: (prod['unitValue'] as num?) ?? 0,
+          motivo: motivo,
         );
         if (!mounted) return;
         if (ok) {
