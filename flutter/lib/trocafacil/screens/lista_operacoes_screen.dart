@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:inventario/network/session_manager.dart';
 import 'package:inventario/precificacao/utils/toast_utils.dart';
 import '../models/avaliacao.dart';
 import '../network/troca_api.dart';
@@ -203,7 +204,27 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
     );
     if (ok != true) return;
     try {
-      await _api.cancelOperation(op.tradeId);
+      final session = await SessionManager.create();
+      final email = session.getUserEmail() ?? '';
+      final deletedBy = email.contains('@') ? email.split('@').first : email;
+      final produtos = op.products;
+      if (produtos.isEmpty) {
+        await _api.cancelOperation(
+          tradeId: op.tradeId,
+          avaliation: '',
+          tags: const [],
+          deletedBy: deletedBy,
+        );
+      } else {
+        for (final p in produtos) {
+          await _api.cancelOperation(
+            tradeId: op.tradeId,
+            avaliation: p.avaliationId ?? '',
+            tags: p.tags,
+            deletedBy: deletedBy,
+          );
+        }
+      }
       if (!mounted) return;
       ToastUtils.showSuccess(context, 'Operação cancelada');
       _carregar();

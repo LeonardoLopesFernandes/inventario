@@ -102,12 +102,25 @@ class TrocaApi {
     return json.decode(resp.body) as Map<String, dynamic>;
   }
 
-  /// Cancela uma operação/troca. (Endpoint provisório — ajustar quando o real
-  /// for informado.)
-  Future<void> cancelOperation(String tradeId) async {
-    final uri =
-        Uri.parse('$baseUrl/bff-trade/operation/$tradeId/cancel');
-    final resp = await http.post(uri, headers: await _headers());
+  /// Cancela a operação/troca (PUT bff-trade/deleteTags).
+  Future<void> cancelOperation({
+    required String tradeId,
+    required String avaliation,
+    required List<String> tags,
+    required String deletedBy,
+  }) async {
+    final uri = Uri.parse('$baseUrl/bff-trade/deleteTags');
+    final headers = await _headers();
+    headers['content-type'] = 'application/json';
+    final resp = await http.put(uri,
+        headers: headers,
+        body: json.encode({
+          'avaliation': avaliation,
+          'id': tradeId,
+          'tag': tags,
+          'deletedBy': deletedBy,
+          'groups': const ['LOJA_RESPONSAVEL'],
+        }));
     if (resp.statusCode == 401) {
       throw TrocaApiException(401, 'Sessão expirada');
     }
