@@ -89,6 +89,12 @@ class Avaliacao {
       updatedBy: j['updatedBy']?.toString(),
     );
   }
+
+  /// Operação cancelada (não permite reimprimir a etiqueta).
+  bool get cancelada {
+    final s = (exchangeStatus ?? '').toUpperCase();
+    return s.contains('CANCEL');
+  }
 }
 
 class AvaliacoesPage {

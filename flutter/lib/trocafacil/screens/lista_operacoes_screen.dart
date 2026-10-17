@@ -56,6 +56,7 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
         transactionDate: _filtros['transactionDate'],
         costumerName: _filtros['costumerName'],
         tradeId: _filtros['tradeId'],
+        tag: _filtros['tag'],
       );
       if (!mounted) return;
       setState(() {
@@ -97,6 +98,7 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
     final r = await Navigator.of(context).pushNamed('/troca_operacoes_filtro');
     if (r is Map) {
       final num = (r['numero'] as String?)?.trim();
+      final etiqueta = (r['etiqueta'] as String?)?.trim();
       final cliente = (r['cliente'] as String?)?.trim();
       final dataAv = _toCompact(r['dataAvaliacao'] as String?);
       final dataCompra = _toCompact(r['dataCompra'] as String?);
@@ -105,6 +107,7 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
       setState(() {
         _filtros = {
           'tradeId': (num != null && num.isNotEmpty) ? num : null,
+          'tag': (etiqueta != null && etiqueta.isNotEmpty) ? etiqueta : null,
           'operation': operacao == 'Troca'
               ? 'TROCA'
               : operacao == 'Devolução'
@@ -161,12 +164,18 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
               Row(
                 children: [
                   Expanded(
-                      child: _badge('REIMPRIMIR',
-                          () => Navigator.pop(ctx, 'reimprimir'))),
+                      child: _badge(
+                          'REIMPRIMIR',
+                          op.cancelada
+                              ? null
+                              : () => Navigator.pop(ctx, 'reimprimir'))),
                   const SizedBox(width: 12),
                   Expanded(
                       child: _badge(
-                          'CANCELAR', () => Navigator.pop(ctx, 'cancelar'))),
+                          'CANCELAR',
+                          op.cancelada
+                              ? null
+                              : () => Navigator.pop(ctx, 'cancelar'))),
                 ],
               ),
             ],
@@ -185,12 +194,14 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
     }
   }
 
-  Widget _badge(String label, VoidCallback onTap) {
+  Widget _badge(String label, VoidCallback? onTap) {
     return ElevatedButton(
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFFD32F2F),
         foregroundColor: Colors.white,
+        disabledBackgroundColor: Colors.grey.shade300,
+        disabledForegroundColor: Colors.grey.shade600,
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         elevation: 0,
@@ -381,7 +392,9 @@ class OperacaoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Stack(
+      children: [
+        Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -520,6 +533,15 @@ class OperacaoCard extends StatelessWidget {
           ),
         ],
       ),
+        ),
+        if (operacao.cancelada)
+          Positioned(
+            top: 12,
+            right: 12,
+            child: Icon(Icons.close,
+                color: const Color(0xFFD32F2F), size: 20),
+          ),
+      ],
     );
   }
 }

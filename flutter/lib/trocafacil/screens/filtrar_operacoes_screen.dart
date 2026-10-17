@@ -11,6 +11,7 @@ class FiltrarOperacoesScreen extends StatefulWidget {
 
 class _FiltrarOperacoesScreenState extends State<FiltrarOperacoesScreen> {
   final _numero = TextEditingController();
+  final _etiqueta = TextEditingController();
   final _cliente = TextEditingController();
   String? _dataAvaliacao;
   String? _dataCompra;
@@ -22,6 +23,7 @@ class _FiltrarOperacoesScreenState extends State<FiltrarOperacoesScreen> {
   @override
   void dispose() {
     _numero.dispose();
+    _etiqueta.dispose();
     _cliente.dispose();
     super.dispose();
   }
@@ -50,6 +52,7 @@ class _FiltrarOperacoesScreenState extends State<FiltrarOperacoesScreen> {
   void _limpar() {
     setState(() {
       _numero.clear();
+      _etiqueta.clear();
       _cliente.clear();
       _dataAvaliacao = null;
       _dataCompra = null;
@@ -63,6 +66,7 @@ class _FiltrarOperacoesScreenState extends State<FiltrarOperacoesScreen> {
   void _aplicar() {
     Navigator.of(context).pop({
       'numero': _numero.text.trim(),
+      'etiqueta': _etiqueta.text.trim(),
       'dataAvaliacao': _dataAvaliacao,
       'operacao': _operacao,
       'motivo': _motivo,
@@ -97,6 +101,8 @@ class _FiltrarOperacoesScreenState extends State<FiltrarOperacoesScreen> {
         padding: const EdgeInsets.all(16.0),
         children: [
           _campoTexto(controller: _numero, hintText: 'Nº de operação'),
+          const SizedBox(height: 12),
+          _campoTexto(controller: _etiqueta, hintText: 'Nº da etiqueta'),
           const SizedBox(height: 12),
           _campoData(
             valor: _dataAvaliacao,
