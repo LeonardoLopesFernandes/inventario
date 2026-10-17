@@ -67,7 +67,6 @@ class _TrocaLoginWebViewScreenState extends State<TrocaLoginWebViewScreen> {
 
   Future<void> _salvar(String token) async {
     _concluido = true;
-    if (mounted) setState(() => _carregando = true);
 
     int? exp;
     Map<String, dynamic>? claims;

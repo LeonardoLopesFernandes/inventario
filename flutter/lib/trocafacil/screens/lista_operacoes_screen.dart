@@ -165,60 +165,93 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
         .where((e) => e.isNotEmpty)
         .join(' | ');
 
+    String? selecionada = etiquetas.isNotEmpty ? etiquetas.first : null;
+
     final acao = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Operação ${op.tradeId}',
-                  style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              _linha('Cliente', nome),
-              if (doc.isNotEmpty) _linha('Documento', doc),
-              if (cidade.isNotEmpty || uf.isNotEmpty)
-                _linha('Cidade', '$cidade${uf.isNotEmpty ? ' - $uf' : ''}'),
-              if (etiquetas.isNotEmpty)
-                _linha('Etiqueta', etiquetas.join(', ')),
-              _linha('Motivo', motivo),
-              if (produtosTxt.isNotEmpty) _linha('Produtos', produtosTxt),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                      child: _badge(
-                          'REIMPRIMIR',
-                          op.cancelada
-                              ? null
-                              : () => Navigator.pop(ctx, 'reimprimir'))),
-                  const SizedBox(width: 12),
-                  Expanded(
-                      child: _badge(
-                          'CANCELAR',
-                          op.cancelada
-                              ? null
-                              : () => Navigator.pop(ctx, 'cancelar'))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Operação ${op.tradeId}',
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                _linha('Cliente', nome),
+                if (doc.isNotEmpty) _linha('Documento', doc),
+                if (cidade.isNotEmpty || uf.isNotEmpty)
+                  _linha('Cidade', '$cidade${uf.isNotEmpty ? ' - $uf' : ''}'),
+                _linha('Motivo', motivo),
+                if (produtosTxt.isNotEmpty)
+                  _linha('Produtos', produtosTxt),
+                if (etiquetas.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  const Text('Selecione a etiqueta para reimprimir:',
+                      style: TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  for (final e in etiquetas)
+                    InkWell(
+                      onTap: () => setSheetState(() => selecionada = e),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            Icon(
+                                selecionada == e
+                                    ? Icons.radio_button_checked
+                                    : Icons.radio_button_off,
+                                color: const Color(0xFFD32F2F),
+                                size: 20),
+                            const SizedBox(width: 8),
+                            Text(e,
+                                style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
-              ),
-            ],
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                        child: _badge(
+                            'REIMPRIMIR',
+                            op.cancelada
+                                ? null
+                                : () => Navigator.pop(ctx, 'reimprimir'))),
+                    const SizedBox(width: 12),
+                    Expanded(
+                        child: _badge(
+                            'CANCELAR',
+                            op.cancelada
+                                ? null
+                                : () => Navigator.pop(ctx, 'cancelar'))),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
     if (!mounted) return;
     if (acao == 'reimprimir') {
-      if (etiquetas.isNotEmpty) {
-        await Clipboard.setData(ClipboardData(text: etiquetas.first));
+      final etq = selecionada;
+      if (etq != null && etq.isNotEmpty) {
+        await Clipboard.setData(ClipboardData(text: etq));
         if (mounted) {
-          ToastUtils.show(
-              context, 'Nº da etiqueta copiado: ${etiquetas.first}');
+          ToastUtils.show(context, 'Nº da etiqueta copiado: $etq');
         }
       }
       final ok = await abrirEtiquetaTroca();
