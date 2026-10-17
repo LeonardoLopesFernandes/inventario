@@ -368,7 +368,7 @@ class _AvaliacaoProdutoScreenState extends State<AvaliacaoProdutoScreen> {
           Row(
             children: [
               Image.asset('assets/drawables/logo_mloja.png',
-                  width: 18, height: 18),
+                  width: 18, height: 18, color: const Color(0xFFD32F2F)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(

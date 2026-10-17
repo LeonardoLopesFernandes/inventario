@@ -208,12 +208,17 @@ class _RealizarTrocaItensScreenState extends State<RealizarTrocaItensScreen> {
   }
 
   Widget _cardProduto(CupomProduct p, int index) {
+    final selecionado = (int.tryParse(_qtds[index].text.trim()) ?? 0) > 0;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(
+          color:
+              selecionado ? const Color(0xFFD32F2F) : Colors.grey.shade300,
+          width: selecionado ? 1.5 : 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,7 +227,7 @@ class _RealizarTrocaItensScreenState extends State<RealizarTrocaItensScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Image.asset('assets/drawables/logo_mloja.png',
-                  width: 18, height: 18),
+                  width: 18, height: 18, color: const Color(0xFFD32F2F)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
