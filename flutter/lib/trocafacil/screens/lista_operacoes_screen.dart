@@ -390,8 +390,14 @@ class OperacaoCard extends StatelessWidget {
     required this.valorLabel,
   });
 
+  void _copiar(BuildContext context, String valor) {
+    Clipboard.setData(ClipboardData(text: valor));
+    ToastUtils.show(context, 'Copiado: $valor');
+  }
+
   @override
   Widget build(BuildContext context) {
+    final etiquetas = operacao.products.expand((p) => p.tags).toList();
     return Stack(
       children: [
         Container(
@@ -421,28 +427,55 @@ class OperacaoCard extends StatelessWidget {
                 Row(
                   children: [
                     Flexible(
-                      child: Text(
-                        operacao.tradeId,
-                        style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87),
+                      child: InkWell(
+                        onTap: () => _copiar(context, operacao.tradeId),
+                        child: Text(
+                          operacao.tradeId,
+                          style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 4),
                     InkWell(
-                      onTap: () async {
-                        await Clipboard.setData(
-                            ClipboardData(text: operacao.tradeId));
-                        if (context.mounted) {
-                          ToastUtils.show(context, 'Número copiado');
-                        }
-                      },
+                      onTap: () => _copiar(context, operacao.tradeId),
                       child: const Icon(Icons.copy_outlined,
                           size: 16, color: Colors.black54),
                     ),
                   ],
                 ),
+                if (etiquetas.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  const Text('Etiqueta',
+                      style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: InkWell(
+                          onTap: () =>
+                              _copiar(context, etiquetas.join(', ')),
+                          child: Text(
+                            etiquetas.join(', '),
+                            style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      InkWell(
+                        onTap: () =>
+                            _copiar(context, etiquetas.join(', ')),
+                        child: const Icon(Icons.copy_outlined,
+                            size: 16, color: Colors.black54),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 12),
                 const Text('Cliente',
                     style: TextStyle(fontSize: 12, color: Colors.grey)),
