@@ -57,7 +57,10 @@ class MainActivity : FlutterActivity() {
                                 result.error("NO_BYTES", "bytes nulo", null)
                                 return@setMethodCallHandler
                             }
-                            val uri = saveToDownloads(fileName, mime, bytes)
+                            val uri = saveToDownloads(
+                                fileName, mime, bytes,
+                                call.argument<String>("subfolder")
+                            )
                             if (call.method == "saveToDownloadsAndOpen") {
                                 uri?.let { openFile(it, mime) }
                             }
@@ -189,23 +192,38 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun saveToDownloads(fileName: String, mimeType: String, bytes: ByteArray): Uri? {
+    private fun saveToDownloads(
+        fileName: String,
+        mimeType: String,
+        bytes: ByteArray,
+        subfolder: String? = null
+    ): Uri? {
         val resolver = contentResolver
         val collection: Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             MediaStore.Downloads.EXTERNAL_CONTENT_URI
         } else {
             MediaStore.Files.getContentUri("external")
         }
+        val relative = if (subfolder.isNullOrBlank()) {
+            "Download"
+        } else {
+            "Download/" + subfolder.trim('/')
+        }
         val values = ContentValues().apply {
             put(MediaStore.Downloads.DISPLAY_NAME, fileName)
             put(MediaStore.Downloads.MIME_TYPE, mimeType)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 put(MediaStore.Downloads.IS_PENDING, 1)
-                put(MediaStore.Downloads.RELATIVE_PATH, "Download")
+                put(MediaStore.Downloads.RELATIVE_PATH, relative)
             } else {
                 val dir = android.os.Environment
                     .getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
-                val file = java.io.File(dir, fileName)
+                val file = if (subfolder.isNullOrBlank()) {
+                    java.io.File(dir, fileName)
+                } else {
+                    java.io.File(java.io.File(dir, subfolder), fileName)
+                }
+                file.parentFile?.mkdirs()
                 put(MediaStore.Files.FileColumns.DATA, file.absolutePath)
             }
         }

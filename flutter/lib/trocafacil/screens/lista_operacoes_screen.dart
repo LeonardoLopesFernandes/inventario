@@ -5,6 +5,7 @@ import 'package:inventario/precificacao/utils/toast_utils.dart';
 import '../models/avaliacao.dart';
 import '../network/troca_api.dart';
 import '../network/troca_session.dart';
+import '../services/etiqueta_launcher.dart';
 
 /// Lista de operações/trocas finalizadas (Troca Fácil).
 class ListaOperacoesScreen extends StatefulWidget {
@@ -165,7 +166,10 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
     );
     if (!mounted) return;
     if (acao == 'reimprimir') {
-      Navigator.of(context).pushNamed('/troca_etiqueta');
+      final ok = await abrirEtiquetaTroca();
+      if (!ok && mounted) {
+        ToastUtils.showError(context, 'Não foi possível abrir a etiqueta');
+      }
     } else if (acao == 'cancelar') {
       await _cancelar(op);
     }

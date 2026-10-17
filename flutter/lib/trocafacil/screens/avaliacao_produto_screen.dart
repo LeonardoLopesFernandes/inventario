@@ -4,6 +4,7 @@ import 'package:inventario/precificacao/utils/toast_utils.dart';
 import '../models/cupom.dart';
 import '../network/troca_api.dart';
 import '../network/troca_session.dart';
+import '../services/etiqueta_launcher.dart';
 import 'realizar_troca_itens_screen.dart' show ProdutoSelecionado;
 
 /// Tela 2 — Avaliação do(s) produto(s) selecionado(s) (Sim/Não por questão).
@@ -242,8 +243,8 @@ class _AvaliacaoProdutoScreenState extends State<AvaliacaoProdutoScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(ctx).pop();
-                Navigator.of(context).pushNamed('/troca_etiqueta',
-                    arguments: {'token': null});
+                Navigator.of(context).popUntil((r) => r.isFirst);
+                abrirEtiquetaTroca();
               },
               child: const Text('Imprimir etiqueta'),
             ),
