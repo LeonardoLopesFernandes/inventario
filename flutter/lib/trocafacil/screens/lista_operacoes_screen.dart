@@ -131,6 +131,32 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
   }
 
   Future<void> _abrirAcoes(Avaliacao op) async {
+    // Busca o detalhe completo da operação (cliente/etiquetas) no BFF.
+    Map<String, dynamic>? det;
+    try {
+      det = await _api.getOperacao(op.tradeId);
+    } catch (_) {}
+    if (!mounted) return;
+
+    final costumer = (det?['costumer'] as Map?) ?? const {};
+    String s(dynamic v) => (v ?? '').toString();
+    final nome = s(costumer['costumerName']).isNotEmpty
+        ? s(costumer['costumerName'])
+        : op.costumerName;
+    final doc = s(costumer['costumerDocument']);
+    final cidade = s(costumer['city']);
+    final uf = s(costumer['uf']);
+
+    final etiquetas = <String>[];
+    final prods = (det?['products'] as List?) ?? const [];
+    for (final p in prods.whereType<Map>()) {
+      final ln = p['labelNumber'];
+      if (ln is List) etiquetas.addAll(ln.map((e) => e.toString()));
+    }
+    if (etiquetas.isEmpty) {
+      etiquetas.addAll(op.products.expand((p) => p.tags));
+    }
+
     final acao = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.white,
@@ -146,20 +172,13 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
               Text('Operação ${op.tradeId}',
                   style: const TextStyle(
                       fontSize: 15, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              Text(op.costumerName,
-                  style:
-                      const TextStyle(fontSize: 13, color: Colors.black54)),
-              if (op.products.expand((p) => p.tags).isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  'Etiqueta: ${op.products.expand((p) => p.tags).join(', ')}',
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87),
-                ),
-              ],
+              const SizedBox(height: 8),
+              _linha('Cliente', nome),
+              if (doc.isNotEmpty) _linha('Documento', doc),
+              if (cidade.isNotEmpty || uf.isNotEmpty)
+                _linha('Cidade', '$cidade${uf.isNotEmpty ? ' - $uf' : ''}'),
+              if (etiquetas.isNotEmpty)
+                _linha('Etiqueta', etiquetas.join(', ')),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -185,7 +204,6 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
     );
     if (!mounted) return;
     if (acao == 'reimprimir') {
-      final etiquetas = op.products.expand((p) => p.tags).toList();
       if (etiquetas.isNotEmpty) {
         await Clipboard.setData(ClipboardData(text: etiquetas.first));
         if (mounted) {
@@ -200,6 +218,24 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
     } else if (acao == 'cancelar') {
       await _cancelar(op);
     }
+  }
+
+  Widget _linha(String label, String valor) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          Text(valor,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87)),
+        ],
+      ),
+    );
   }
 
   Widget _badge(String label, VoidCallback? onTap) {
