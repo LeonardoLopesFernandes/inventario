@@ -125,6 +125,97 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
     }
   }
 
+  Future<void> _abrirAcoes(Avaliacao op) async {
+    final acao = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Operação ${op.tradeId}',
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              Text(op.costumerName,
+                  style:
+                      const TextStyle(fontSize: 13, color: Colors.black54)),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                      child: _badge('REIMPRIMIR',
+                          () => Navigator.pop(ctx, 'reimprimir'))),
+                  const SizedBox(width: 12),
+                  Expanded(
+                      child: _badge(
+                          'CANCELAR', () => Navigator.pop(ctx, 'cancelar'))),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (acao == 'reimprimir') {
+      Navigator.of(context).pushNamed('/troca_etiqueta');
+    } else if (acao == 'cancelar') {
+      await _cancelar(op);
+    }
+  }
+
+  Widget _badge(String label, VoidCallback onTap) {
+    return ElevatedButton(
+      onPressed: onTap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFFD32F2F),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        elevation: 0,
+      ),
+      child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Future<void> _cancelar(Avaliacao op) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Cancelar operação'),
+        content: Text('Deseja cancelar a operação ${op.tradeId}?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Não')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sim')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _api.cancelOperation(op.tradeId);
+      if (!mounted) return;
+      ToastUtils.showSuccess(context, 'Operação cancelada');
+      _carregar();
+    } on TrocaApiException catch (e) {
+      if (!mounted) return;
+      ToastUtils.showError(context, e.message);
+    } catch (_) {
+      if (!mounted) return;
+      ToastUtils.showError(context, 'Erro ao cancelar operação');
+    }
+  }
+
   String _operacaoLabel(String op) {
     switch (op) {
       case 'TROCA':
@@ -226,11 +317,14 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
       padding: const EdgeInsets.all(16.0),
       itemCount: _lista.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (_, i) => OperacaoCard(
-        operacao: _lista[i],
-        operacaoLabel: _operacaoLabel(_lista[i].operation),
-        motivoLabel: _motivoLabel(_lista[i].cause),
-        valorLabel: _brl(_lista[i].totalValue),
+      itemBuilder: (_, i) => GestureDetector(
+        onTap: () => _abrirAcoes(_lista[i]),
+        child: OperacaoCard(
+          operacao: _lista[i],
+          operacaoLabel: _operacaoLabel(_lista[i].operation),
+          motivoLabel: _motivoLabel(_lista[i].cause),
+          valorLabel: _brl(_lista[i].totalValue),
+        ),
       ),
     );
   }

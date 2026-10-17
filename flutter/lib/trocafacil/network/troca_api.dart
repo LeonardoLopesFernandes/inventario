@@ -102,6 +102,20 @@ class TrocaApi {
     return json.decode(resp.body) as Map<String, dynamic>;
   }
 
+  /// Cancela uma operação/troca. (Endpoint provisório — ajustar quando o real
+  /// for informado.)
+  Future<void> cancelOperation(String tradeId) async {
+    final uri =
+        Uri.parse('$baseUrl/bff-trade/operation/$tradeId/cancel');
+    final resp = await http.post(uri, headers: await _headers());
+    if (resp.statusCode == 401) {
+      throw TrocaApiException(401, 'Sessão expirada');
+    }
+    if (resp.statusCode < 200 || resp.statusCode >= 300) {
+      throw TrocaApiException(resp.statusCode, 'Erro ${resp.statusCode}');
+    }
+  }
+
   /// Consulta os dados do cupom (base-cupom/get_cupom).
   /// [storeId] sem prefixo "L" (ex.: 291).
   Future<Cupom> getCupom({
