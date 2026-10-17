@@ -146,6 +146,9 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
     final doc = s(costumer['costumerDocument']);
     final cidade = s(costumer['city']);
     final uf = s(costumer['uf']);
+    final motivo = s(det?['reason']).isNotEmpty
+        ? s(det?['reason'])
+        : _motivoLabel(op.cause);
 
     final etiquetas = <String>[];
     final prods = (det?['products'] as List?) ?? const [];
@@ -156,6 +159,11 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
     if (etiquetas.isEmpty) {
       etiquetas.addAll(op.products.expand((p) => p.tags));
     }
+    final produtosTxt = prods
+        .whereType<Map>()
+        .map((p) => s(p['productDescription']))
+        .where((e) => e.isNotEmpty)
+        .join(' | ');
 
     final acao = await showModalBottomSheet<String>(
       context: context,
@@ -179,6 +187,8 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
                 _linha('Cidade', '$cidade${uf.isNotEmpty ? ' - $uf' : ''}'),
               if (etiquetas.isNotEmpty)
                 _linha('Etiqueta', etiquetas.join(', ')),
+              _linha('Motivo', motivo),
+              if (produtosTxt.isNotEmpty) _linha('Produtos', produtosTxt),
               const SizedBox(height: 16),
               Row(
                 children: [
