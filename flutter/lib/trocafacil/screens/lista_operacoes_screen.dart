@@ -147,6 +147,16 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
               Text(op.costumerName,
                   style:
                       const TextStyle(fontSize: 13, color: Colors.black54)),
+              if (op.products.expand((p) => p.tags).isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Etiqueta: ${op.products.expand((p) => p.tags).join(', ')}',
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87),
+                ),
+              ],
               const SizedBox(height: 16),
               Row(
                 children: [
