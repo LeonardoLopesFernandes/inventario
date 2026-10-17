@@ -313,4 +313,9 @@ class InventarioService {
       'items': items.map((e) => {'id': e.id, 'reasonId': ''}).toList(),
     });
   }
+
+  /// Finaliza (processa) a quebra aberta: PUT /web/breakage/{id}/process.
+  Future<void> processBreakage(String breakageId) async {
+    await client.put('web/breakage/$breakageId/process');
+  }
 }

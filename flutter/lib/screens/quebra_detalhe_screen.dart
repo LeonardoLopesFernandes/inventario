@@ -37,17 +37,21 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
     _init();
   }
 
+  String _status = 'PENDING';
+
   Future<void> _init() async {
     final session = await SessionManager.create();
     final service = InventarioService.forSession(session);
     List<BreakageItem> itens = [];
     List<BreakageReason> reasons = const [];
     bool somenteLeitura = false;
+    String status = 'PENDING';
     try {
       final d = await service.getBreakageDetail(widget.breakageId);
       itens = d.items;
       reasons = d.reasons;
-      somenteLeitura = d.breakage.processado;
+      status = d.breakage.status.toUpperCase();
+      somenteLeitura = status == 'PROCESSED';
     } catch (_) {
       try {
         reasons = await service.getBreakageReasons();
@@ -59,6 +63,7 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
       _service = service;
       _itens = itens;
       _reasons = reasons;
+      _status = status;
       _somenteLeitura = somenteLeitura;
       _carregando = false;
     });
@@ -186,6 +191,40 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Falha ao remover itens'), backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> _processarQuebra() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Finalizar quebra'),
+        content: const Text(
+            'Deseja finalizar (processar) a quebra? Após isso não será possível alterar os itens.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Não')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sim')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await _service!.processBreakage(widget.breakageId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Quebra finalizada com sucesso'),
+          backgroundColor: Color(Constants.badgeGreen)));
+      Navigator.of(context).pop(true);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Falha ao finalizar quebra'),
+          backgroundColor: Colors.red));
     }
   }
 
@@ -518,9 +557,13 @@ class _QuebraDetalheScreenState extends State<QuebraDetalheScreen> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
               ),
-              onPressed: _itens.isEmpty ? null : _abrirQuebra,
-              child: const Text('Abrir quebra',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+              onPressed: _itens.isEmpty
+                  ? null
+                  : (_status == 'OPEN' ? _processarQuebra : _abrirQuebra),
+              child: Text(
+                  _status == 'OPEN' ? 'Finalizar quebra' : 'Abrir quebra',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w500)),
             ),
           ),
           const SizedBox(height: 12),
