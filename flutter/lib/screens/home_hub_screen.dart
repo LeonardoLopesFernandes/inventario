@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _kFavoritosKey = 'hubs_favoritos';
@@ -120,10 +121,38 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
         .toList();
   }
 
+  Future<void> _confirmarSaida() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('Sair do app'),
+        content: const Text('Deseja sair do aplicativo?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Não')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sim')),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await SystemNavigator.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final filtrados = _filtrados;
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _confirmarSaida();
+      },
+      child: Scaffold(
       backgroundColor: const Color(0xFFF1F1F1),
       body: Column(
         children: [
@@ -229,6 +258,7 @@ class _HomeHubScreenState extends State<HomeHubScreen> {
                   ),
           ),
         ],
+      ),
       ),
     );
   }
