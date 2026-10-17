@@ -5,7 +5,7 @@ import 'package:inventario/precificacao/utils/toast_utils.dart';
 import '../models/avaliacao.dart';
 import '../network/troca_api.dart';
 import '../network/troca_session.dart';
-import '../services/etiqueta_launcher.dart';
+import '../services/etiqueta_pdf.dart';
 
 /// Lista de operações/trocas finalizadas (Troca Fácil).
 class ListaOperacoesScreen extends StatefulWidget {
@@ -248,15 +248,31 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
     if (!mounted) return;
     if (acao == 'reimprimir') {
       final etq = selecionada;
-      if (etq != null && etq.isNotEmpty) {
-        await Clipboard.setData(ClipboardData(text: etq));
-        if (mounted) {
-          ToastUtils.show(context, 'Nº da etiqueta copiado: $etq');
+      if (etq == null || etq.isEmpty) return;
+      await Clipboard.setData(ClipboardData(text: etq));
+      final prod =
+          prods.isNotEmpty ? Map<String, dynamic>.from(prods.first as Map) : <String, dynamic>{};
+      try {
+        final ok = await TrocaEtiquetaPdf.salvarNoDownloads(
+          labelNumber: etq,
+          tradeId: op.tradeId,
+          loja: s(det?['storeNumber']),
+          data: TrocaApi.fmtIsoDate(s(det?['operationDate'])),
+          cliente: nome,
+          documento: doc,
+          produto: s(prod['productDescription']),
+          valor: (prod['unitValue'] as num?) ?? 0,
+        );
+        if (!mounted) return;
+        if (ok) {
+          ToastUtils.showSuccess(context, 'Etiqueta salva em Download/Troca');
+        } else {
+          ToastUtils.showError(context, 'Não foi possível salvar a etiqueta');
         }
-      }
-      final ok = await abrirEtiquetaTroca();
-      if (!ok && mounted) {
-        ToastUtils.showError(context, 'Não foi possível abrir a etiqueta');
+      } catch (_) {
+        if (mounted) {
+          ToastUtils.showError(context, 'Erro ao gerar a etiqueta');
+        }
       }
     } else if (acao == 'cancelar') {
       await _cancelar(op);
