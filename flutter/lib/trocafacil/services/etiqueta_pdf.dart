@@ -15,6 +15,7 @@ class TrocaEtiquetaPdf {
     required String data,
     required String produto,
     required String motivo,
+    required String modalidade,
   }) async {
     final doc = pw.Document();
     pw.MemoryImage? icone;
@@ -32,6 +33,7 @@ class TrocaEtiquetaPdf {
             data: data,
             tradeId: tradeId,
             produto: produto,
+            modalidade: modalidade,
             icone: icone,
           ),
           pw.SizedBox(height: 12),
@@ -71,6 +73,7 @@ class TrocaEtiquetaPdf {
     required String data,
     required String tradeId,
     required String produto,
+    required String modalidade,
     pw.MemoryImage? icone,
   }) {
     return pw.Container(
@@ -116,6 +119,22 @@ class TrocaEtiquetaPdf {
                   ],
                 ),
               ),
+              if (modalidade.isNotEmpty) ...[
+                pw.SizedBox(width: 8),
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColor.fromInt(0xFFFCE4EC),
+                    borderRadius: pw.BorderRadius.circular(8),
+                  ),
+                  child: pw.Text(modalidade,
+                      style: pw.TextStyle(
+                          fontSize: 10,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColor.fromInt(0xFF880E4F))),
+                ),
+              ],
             ],
           ),
           pw.SizedBox(height: 12),
@@ -255,6 +274,7 @@ class TrocaEtiquetaPdf {
     required String data,
     required String produto,
     required String motivo,
+    required String modalidade,
   }) async {
     final bytes = await gerar(
       labelNumber: labelNumber,
@@ -263,6 +283,7 @@ class TrocaEtiquetaPdf {
       data: data,
       produto: produto,
       motivo: motivo,
+      modalidade: modalidade,
     );
     const channel = MethodChannel('com.ir/media');
     final uri = await channel.invokeMethod<String>('saveToDownloads', {

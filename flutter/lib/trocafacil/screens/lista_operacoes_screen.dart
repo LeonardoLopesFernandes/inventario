@@ -252,6 +252,11 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
       await Clipboard.setData(ClipboardData(text: etq));
       final prod =
           prods.isNotEmpty ? Map<String, dynamic>.from(prods.first as Map) : <String, dynamic>{};
+      final operationType = s(det?['operationType']).toUpperCase();
+      final systemSource = s(det?['systemSource']).toUpperCase();
+      final modalidade = operationType == 'DEVOLUCAO'
+          ? 'Devolução'
+          : (systemSource == 'FISICO' ? 'Físico' : '');
       try {
         final ok = await TrocaEtiquetaPdf.salvarNoDownloads(
           labelNumber: etq,
@@ -260,6 +265,7 @@ class _ListaOperacoesScreenState extends State<ListaOperacoesScreen> {
           data: TrocaApi.fmtIsoDate(s(det?['operationDate'])),
           produto: s(prod['productDescription']),
           motivo: motivo,
+          modalidade: modalidade,
         );
         if (!mounted) return;
         if (ok) {
